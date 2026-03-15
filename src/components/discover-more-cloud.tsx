@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { getTagUsageCount } from "@/lib/sample-data";
 
 type DiscoverMoreCloudProps = {
   tags: string[];
+  tagCounts: Record<string, number>;
 };
 
 function pickRandomTags(tags: string[], count: number) {
@@ -45,7 +45,7 @@ function getShuffledSelection(tags: string[], previous: string[] = []) {
   return next;
 }
 
-export function DiscoverMoreCloud({ tags }: DiscoverMoreCloudProps) {
+export function DiscoverMoreCloud({ tags, tagCounts }: DiscoverMoreCloudProps) {
   const [randomTagNonce, setRandomTagNonce] = useState(0);
   const [discoveryTags, setDiscoveryTags] = useState<string[]>(() =>
     getShuffledSelection(tags),
@@ -54,9 +54,9 @@ export function DiscoverMoreCloud({ tags }: DiscoverMoreCloudProps) {
   const discoveryTagWeights = useMemo(
     () =>
       Object.fromEntries(
-        discoveryTags.map((tag) => [tag, getTagUsageCount(tag)]),
+        discoveryTags.map((tag) => [tag, tagCounts[tag] ?? 1]),
       ) as Record<string, number>,
-    [discoveryTags],
+    [discoveryTags, tagCounts],
   );
 
   return (

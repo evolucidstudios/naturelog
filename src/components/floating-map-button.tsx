@@ -4,12 +4,13 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSyncExternalStore } from "react";
 import { LAST_DECK_STORAGE_KEY, LAST_MAP_STORAGE_KEY } from "@/lib/navigation";
-import { entries, getPrimaryTagForEntry } from "@/lib/sample-data";
 
 export function FloatingMapButton() {
   const pathname = usePathname();
   const isMapPage = pathname === "/map";
-  const defaultDeckHref = `/tag/${getPrimaryTagForEntry(entries[0])}`;
+  const hidden =
+    pathname?.startsWith("/admin") || pathname === "/login" || pathname?.startsWith("/api");
+  const defaultDeckHref = "/";
   const defaultMapHref = "/map";
   const deckHref = useSyncExternalStore(
     () => () => {},
@@ -33,6 +34,10 @@ export function FloatingMapButton() {
     },
     () => defaultMapHref,
   );
+
+  if (hidden) {
+    return null;
+  }
 
   return (
     <div className="pointer-events-none fixed inset-x-0 bottom-5 z-50 flex justify-center px-4">

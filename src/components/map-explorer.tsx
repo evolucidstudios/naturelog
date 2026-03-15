@@ -9,22 +9,21 @@ import Map, {
   type MapRef,
 } from "react-map-gl/mapbox";
 import {
-  getDeckHrefForEntry,
-  getTagUsageCount,
-  type NatureEntry,
-} from "@/lib/sample-data";
+  entryMatchesRegion,
+  getCollectionTags,
+  getDeckHrefForEntryFromEntries,
+  getTagCounts,
+  titleCase,
+  type MapRegion,
+} from "@/lib/nature-utils";
+import { type NatureEntry } from "@/lib/sample-data";
 import { LAST_DECK_STORAGE_KEY, LAST_MAP_STORAGE_KEY } from "@/lib/navigation";
 
 type MapExplorerProps = {
   entries: NatureEntry[];
   mapboxToken?: string;
   initialFocusId?: string;
-  regions: Array<{
-    slug: string;
-    name: string;
-    summary: string;
-    deckSlug: string;
-  }>;
+  regions: MapRegion[];
 };
 
 type MapSearchOption = {
@@ -78,10 +77,6 @@ function pickRandomItem<T>(items: T[]) {
   return items[Math.floor(Math.random() * items.length)] ?? null;
 }
 
-function titleCase(value: string) {
-  return value.replace(/[-_]/g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
-}
-
 function boundsForEntries(entries: NatureEntry[]) {
   if (entries.length === 0) {
     return null;
@@ -123,18 +118,10 @@ export function MapExplorer({
   const mapRef = useRef<MapRef | null>(null);
   const searchPanelRef = useRef<HTMLDivElement | null>(null);
   const searchInputRef = useRef<HTMLInputElement | null>(null);
+  const tagCounts = useMemo(() => getTagCounts(entries), [entries]);
 
   const tagPool = useMemo(
-    () =>
-      Array.from(new Set(entries.flatMap((entry) => entry.tags))).sort((left, right) => {
-        const popularityDelta = getTagUsageCount(right) - getTagUsageCount(left);
-
-        if (popularityDelta !== 0) {
-          return popularityDelta;
-        }
-
-        return left.localeCompare(right);
-      }),
+    () => getCollectionTags(entries),
     [entries],
   );
   const featuredTags = useMemo(() => tagPool.slice(0, 6), [tagPool]);
@@ -147,8 +134,8 @@ export function MapExplorer({
     }
 
     if (activeFilter.startsWith("region:")) {
-      const deckSlug = activeFilter.replace("region:", "");
-      return regions.find((region) => region.deckSlug === deckSlug)?.name ?? deckSlug;
+      const regionSlug = activeFilter.replace("region:", "");
+      return regions.find((region) => region.slug === regionSlug)?.name ?? regionSlug;
     }
 
     if (activeFilter.startsWith("tag:")) {
@@ -164,8 +151,14 @@ export function MapExplorer({
     }
 
     if (activeFilter.startsWith("region:")) {
-      const deckSlug = activeFilter.replace("region:", "");
-      return entries.filter((entry) => entry.deckSlugs.includes(deckSlug));
+      const regionSlug = activeFilter.replace("region:", "");
+      const region = regions.find((item) => item.slug === regionSlug);
+
+      if (!region) {
+        return entries;
+      }
+
+      return entries.filter((entry) => entryMatchesRegion(entry, region));
     }
 
     if (activeFilter.startsWith("tag:")) {
@@ -174,7 +167,7 @@ export function MapExplorer({
     }
 
     return entries;
-  }, [activeFilter, entries]);
+  }, [activeFilter, entries, regions]);
 
   const selectedEntry = useMemo(() => {
     if (selectedEntryId === null) {
@@ -217,7 +210,7 @@ export function MapExplorer({
 
     const regionOptions: MapSearchOption[] = regions.map((region) => ({
       label: region.name,
-      value: region.deckSlug,
+      value: region.slug,
       type: "region",
     }));
     const categoryOptions: MapSearchOption[] = Array.from(categoryRouteMap.entries()).map(
@@ -281,9 +274,10 @@ export function MapExplorer({
     });
   };
 
-  const focusRegion = (deckSlug: string) => {
-    const matching = entries.filter((entry) => entry.deckSlugs.includes(deckSlug));
-    setActiveFilter(`region:${deckSlug}`);
+  const focusRegion = (regionSlug: string) => {
+    const region = regions.find((item) => item.slug === regionSlug);
+    const matching = region ? entries.filter((entry) => entryMatchesRegion(entry, region)) : [];
+    setActiveFilter(`region:${regionSlug}`);
     setSelectedEntryId(matching[0]?.id ?? null);
     fitEntries(matching, 12.2);
   };
@@ -311,12 +305,15 @@ export function MapExplorer({
         LAST_MAP_STORAGE_KEY,
         `/map?focus=${encodeURIComponent(selectedEntry.id)}`,
       );
-      window.localStorage.setItem(LAST_DECK_STORAGE_KEY, getDeckHrefForEntry(selectedEntry));
+      window.localStorage.setItem(
+        LAST_DECK_STORAGE_KEY,
+        getDeckHrefForEntryFromEntries(selectedEntry, entries),
+      );
       return;
     }
 
     window.localStorage.setItem(LAST_MAP_STORAGE_KEY, "/map");
-  }, [selectedEntry]);
+  }, [entries, selectedEntry]);
 
   useEffect(() => {
     if (!searchOpen) {
@@ -354,7 +351,7 @@ export function MapExplorer({
 
   const focusRandomMapSlice = () => {
     const options = [
-      ...regions.map((region) => ({ type: "region" as const, value: region.deckSlug })),
+      ...regions.map((region) => ({ type: "region" as const, value: region.slug })),
       ...tagPool.map((tag) => ({ type: "tag" as const, value: tag })),
     ];
     const currentValue =
@@ -586,7 +583,7 @@ export function MapExplorer({
                     CENTER
                   </button>
                   <Link
-                    href={getDeckHrefForEntry(selectedEntry)}
+                    href={getDeckHrefForEntryFromEntries(selectedEntry, entries)}
                     className="rounded-[14px] border border-bark/10 bg-bark px-3 py-1.5 text-center text-xs font-semibold tracking-[0.16em] text-paper transition-transform duration-200 hover:-translate-y-0.5"
                   >
                     OPEN
@@ -627,9 +624,9 @@ export function MapExplorer({
               <button
                 key={region.slug}
                 type="button"
-                onClick={() => focusRegion(region.deckSlug)}
+                onClick={() => focusRegion(region.slug)}
                 className={`rounded-full px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] transition-transform duration-200 hover:-translate-y-0.5 ${
-                  activeFilter === `region:${region.deckSlug}`
+                  activeFilter === `region:${region.slug}`
                     ? "bg-bark text-paper"
                     : "border border-bark/10 bg-paper text-bark"
                 }`}
@@ -717,9 +714,9 @@ export function MapExplorer({
                   type="button"
                   onClick={() => focusTag(tag)}
                   className={`font-semibold uppercase text-[#2f5d62] transition-all duration-200 hover:-translate-y-0.5 hover:text-[#22494d] ${
-                    getTagUsageCount(tag) >= 3
+                    (tagCounts[tag] ?? 0) >= 3
                       ? "text-xl tracking-[0.08em]"
-                      : getTagUsageCount(tag) === 2
+                      : (tagCounts[tag] ?? 0) === 2
                         ? "text-sm tracking-[0.14em]"
                         : "text-xs tracking-[0.18em]"
                   }`}

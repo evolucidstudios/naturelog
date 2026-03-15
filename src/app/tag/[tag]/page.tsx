@@ -1,23 +1,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { RolodexStack } from "@/components/rolodex-stack";
-import { entries } from "@/lib/sample-data";
+import { shuffleArray } from "@/lib/nature-utils";
+import { getSiteEntries, getSiteEntriesByTag } from "@/lib/live-data";
 
 type TagPageProps = {
   params: Promise<{ tag: string }>;
   searchParams: Promise<{ focus?: string }>;
 };
-
-function shuffleEntries<T>(source: T[]) {
-  const copy = [...source];
-
-  for (let index = copy.length - 1; index > 0; index -= 1) {
-    const swapIndex = Math.floor(Math.random() * (index + 1));
-    [copy[index], copy[swapIndex]] = [copy[swapIndex], copy[index]];
-  }
-
-  return copy;
-}
 
 export const dynamic = "force-dynamic";
 
@@ -25,13 +15,16 @@ export default async function TagPage({ params, searchParams }: TagPageProps) {
   const { tag } = await params;
   const { focus } = await searchParams;
   const decodedTag = decodeURIComponent(tag);
-  const matches = entries.filter((entry) => entry.tags.includes(decodedTag));
+  const [matches, collectionEntries] = await Promise.all([
+    getSiteEntriesByTag(decodedTag),
+    getSiteEntries(),
+  ]);
 
   if (matches.length === 0) {
     notFound();
   }
 
-  const shuffledMatches = shuffleEntries(matches);
+  const shuffledMatches = shuffleArray(matches);
   const focusEntry = focus
     ? shuffledMatches.find((entry) => entry.id === focus)
     : undefined;
@@ -48,6 +41,7 @@ export default async function TagPage({ params, searchParams }: TagPageProps) {
           subtitle="Centered card stack"
           accentTag={decodedTag}
           focusEntryId={focusEntry?.id}
+          collectionEntries={collectionEntries}
         />
 
         <header className="mt-6 rounded-[28px] border border-white/70 bg-white/64 px-5 py-6 shadow-[0_18px_65px_rgba(88,73,37,0.08)] backdrop-blur sm:px-6 sm:py-7">

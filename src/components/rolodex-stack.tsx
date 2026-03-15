@@ -6,14 +6,15 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { LAST_DECK_STORAGE_KEY } from "@/lib/navigation";
 import { LAST_MAP_STORAGE_KEY } from "@/lib/navigation";
+import {
+  getCollectionTags,
+  getDiscoveryTagsForEntry,
+  getTagCounts,
+  titleCase,
+} from "@/lib/nature-utils";
 import { TagChipLink } from "@/components/tag-chip-link";
 import mapWorld from "@/lib/mapworld.png";
-import {
-  entries as allEntries,
-  getDiscoveryTags,
-  getTagUsageCount,
-  type NatureEntry,
-} from "@/lib/sample-data";
+import { type NatureEntry } from "@/lib/sample-data";
 
 type RolodexStackProps = {
   entries: NatureEntry[];
@@ -21,6 +22,7 @@ type RolodexStackProps = {
   subtitle: string;
   accentTag?: string;
   focusEntryId?: string;
+  collectionEntries?: NatureEntry[];
 };
 
 type MotionPhase = "idle" | "leaving" | "entering";
@@ -61,10 +63,6 @@ function imageFill(image: string) {
   return undefined;
 }
 
-function titleCase(value: string) {
-  return value.replace(/[-_]/g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
-}
-
 const DiscoverMoreCloudNoSSR = dynamic(
   () =>
     import("@/components/discover-more-cloud").then(
@@ -89,8 +87,11 @@ export function RolodexStack({
   entries,
   accentTag,
   focusEntryId,
+  collectionEntries,
 }: RolodexStackProps) {
   const router = useRouter();
+  const allCollectionEntries =
+    collectionEntries && collectionEntries.length > 0 ? collectionEntries : entries;
   const [activeIndex, setActiveIndex] = useState(0);
   const [direction, setDirection] = useState<1 | -1>(1);
   const [phase, setPhase] = useState<MotionPhase>("idle");
@@ -261,37 +262,34 @@ export function RolodexStack({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [galleryEntry]);
 
+  const collectionTagCounts = useMemo(
+    () => getTagCounts(allCollectionEntries),
+    [allCollectionEntries],
+  );
   const activeTagWeights = useMemo(
     () =>
       Object.fromEntries(
-        activeEntry ? activeEntry.tags.map((tag) => [tag, getTagUsageCount(tag)]) : [],
+        activeEntry
+          ? activeEntry.tags.map((tag) => [tag, collectionTagCounts[tag] ?? 1])
+          : [],
       ) as Record<string, number>,
-    [activeEntry],
+    [activeEntry, collectionTagCounts],
   );
   const allCollectionTags = useMemo(
-    () =>
-      Array.from(new Set(allEntries.flatMap((entry) => entry.tags))).sort((left, right) => {
-        const popularityDelta = getTagUsageCount(right) - getTagUsageCount(left);
-
-        if (popularityDelta !== 0) {
-          return popularityDelta;
-        }
-
-        return left.localeCompare(right);
-      }),
-    [],
+    () => getCollectionTags(allCollectionEntries),
+    [allCollectionEntries],
   );
   const searchOptions = useMemo(() => {
     const categoryRouteMap = new Map<string, string>();
 
-    for (const entry of allEntries) {
+    for (const entry of allCollectionEntries) {
       if (!entry.category || categoryRouteMap.has(entry.category)) {
         continue;
       }
 
       const categoryTags = Array.from(
         new Set(
-          allEntries
+          allCollectionEntries
             .filter((item) => item.category === entry.category)
             .flatMap((item) => item.tags),
         ),
@@ -323,7 +321,7 @@ export function RolodexStack({
     );
 
     return [...categoryOptions, ...tagOptions];
-  }, [allCollectionTags]);
+  }, [allCollectionEntries, allCollectionTags]);
   const filteredSearchOptions = useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLowerCase();
 
@@ -1076,7 +1074,8 @@ export function RolodexStack({
         {/* RANDOM TAGS / DISCOVERY */}
         <DiscoverMoreCloudNoSSR
           key={activeEntry.id}
-          tags={getDiscoveryTags(activeEntry)}
+          tags={getDiscoveryTagsForEntry(allCollectionEntries, activeEntry)}
+          tagCounts={collectionTagCounts}
         />
       </section>
     </section>
