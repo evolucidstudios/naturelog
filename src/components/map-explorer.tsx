@@ -27,6 +27,12 @@ type MapExplorerProps = {
   }>;
 };
 
+type MapSearchOption = {
+  label: string;
+  value: string;
+  type: "tag" | "category" | "region";
+};
+
 function pickRandomTags(tags: string[], count: number) {
   const shuffled = [...tags];
 
@@ -72,6 +78,10 @@ function pickRandomItem<T>(items: T[]) {
   return items[Math.floor(Math.random() * items.length)] ?? null;
 }
 
+function titleCase(value: string) {
+  return value.replace(/[-_]/g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
 function boundsForEntries(entries: NatureEntry[]) {
   if (entries.length === 0) {
     return null;
@@ -108,7 +118,11 @@ export function MapExplorer({
   );
   const [activeFilter, setActiveFilter] = useState<string>("all");
   const [randomTagNonce, setRandomTagNonce] = useState(0);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const mapRef = useRef<MapRef | null>(null);
+  const searchPanelRef = useRef<HTMLDivElement | null>(null);
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
 
   const tagPool = useMemo(
     () =>
@@ -174,6 +188,69 @@ export function MapExplorer({
       null
     );
   }, [entries, selectedEntryId, visibleEntries]);
+  const searchOptions = useMemo(() => {
+    const categoryRouteMap = new globalThis.Map<string, string>();
+
+    for (const entry of entries) {
+      if (!entry.category || categoryRouteMap.has(entry.category)) {
+        continue;
+      }
+
+      const categoryTags = Array.from(
+        new Set(
+          entries
+            .filter((item) => item.category === entry.category)
+            .flatMap((item) => item.tags),
+        ),
+      );
+      const plural = `${entry.category}s`;
+      const routeTag =
+        categoryTags.find((tag) => tag === plural) ??
+        categoryTags.find((tag) => tag === entry.category) ??
+        categoryTags.find((tag) => tag.includes(entry.category ?? "")) ??
+        categoryTags[0];
+
+      if (routeTag) {
+        categoryRouteMap.set(entry.category, routeTag);
+      }
+    }
+
+    const regionOptions: MapSearchOption[] = regions.map((region) => ({
+      label: region.name,
+      value: region.deckSlug,
+      type: "region",
+    }));
+    const categoryOptions: MapSearchOption[] = Array.from(categoryRouteMap.entries()).map(
+      ([category, routeTag]) => ({
+        label: titleCase(category),
+        value: routeTag,
+        type: "category",
+      }),
+    );
+    const tagOptions: MapSearchOption[] = tagPool.map((tag) => ({
+      label: titleCase(tag),
+      value: tag,
+      type: "tag",
+    }));
+
+    return [...regionOptions, ...categoryOptions, ...tagOptions];
+  }, [entries, regions, tagPool]);
+  const filteredSearchOptions = useMemo(() => {
+    const normalizedQuery = searchQuery.trim().toLowerCase();
+
+    if (!normalizedQuery) {
+      const regionsList = searchOptions.filter((option) => option.type === "region").slice(0, 3);
+      const categories = searchOptions
+        .filter((option) => option.type === "category")
+        .slice(0, 4);
+      const tags = searchOptions.filter((option) => option.type === "tag").slice(0, 8);
+      return [...regionsList, ...categories, ...tags];
+    }
+
+    return searchOptions
+      .filter((option) => option.label.toLowerCase().includes(normalizedQuery))
+      .slice(0, 10);
+  }, [searchOptions, searchQuery]);
 
   const fitEntries = (items: NatureEntry[], fallbackZoom = 11.8) => {
     if (!mapRef.current || items.length === 0) {
@@ -241,6 +318,40 @@ export function MapExplorer({
     window.localStorage.setItem(LAST_MAP_STORAGE_KEY, "/map");
   }, [selectedEntry]);
 
+  useEffect(() => {
+    if (!searchOpen) {
+      return;
+    }
+
+    searchInputRef.current?.focus();
+  }, [searchOpen]);
+
+  useEffect(() => {
+    if (!searchOpen) {
+      return;
+    }
+
+    const handlePointerDown = (event: PointerEvent) => {
+      if (!searchPanelRef.current?.contains(event.target as Node)) {
+        setSearchOpen(false);
+      }
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setSearchOpen(false);
+      }
+    };
+
+    window.addEventListener("pointerdown", handlePointerDown);
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("pointerdown", handlePointerDown);
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [searchOpen]);
+
   const focusRandomMapSlice = () => {
     const options = [
       ...regions.map((region) => ({ type: "region" as const, value: region.deckSlug })),
@@ -266,6 +377,18 @@ export function MapExplorer({
     focusTag(next.value);
   };
 
+  const jumpToSearchOption = (option: MapSearchOption) => {
+    setSearchOpen(false);
+    setSearchQuery("");
+
+    if (option.type === "region") {
+      focusRegion(option.value);
+      return;
+    }
+
+    focusTag(option.value);
+  };
+
   if (!mapboxToken) {
     return (
       <div className="flex min-h-[560px] items-center justify-center rounded-[34px] border border-bark/10 bg-[linear-gradient(140deg,#d7e6c6,#b8cfb7_46%,#adc9c8_100%)] p-8 text-center">
@@ -285,54 +408,101 @@ export function MapExplorer({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-3 rounded-[24px] border border-white/70 bg-white/72 px-4 py-3 shadow-[0_18px_60px_rgba(88,73,37,0.08)] backdrop-blur sm:px-5">
-        <div className="flex min-w-0 items-center gap-3">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-moss">
-            Viewing
-          </p>
-          <div className="rounded-full border border-bark/10 bg-paper px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-bark">
-            {activeFilterLabel}
-          </div>
-        </div>
         <button
           type="button"
           onClick={focusRandomMapSlice}
-          className="inline-flex shrink-0 items-center gap-2 rounded-full border border-bark/12 bg-bark px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-paper transition-transform duration-200 hover:-translate-y-0.5"
+          aria-label="Randomize map focus"
+          className="group inline-flex h-[4.9rem] w-[4.9rem] shrink-0 items-center justify-center rounded-full border border-bark/12 bg-white/78 text-bark shadow-[0_12px_30px_rgba(57,51,38,0.1)] backdrop-blur transition-all duration-200 hover:-translate-y-0.5 hover:bg-white active:scale-95 sm:h-[4.4rem] sm:w-[4.4rem]"
         >
-          <svg viewBox="0 0 48 48" className="h-4 w-4" aria-hidden="true">
-            <path
-              d="M38 17V9h-8"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="4"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            <path
-              d="M11 24a13 13 0 0 1 22-9l5 5"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="4"
-              strokeLinecap="round"
-            />
-            <path
-              d="M10 31v8h8"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="4"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            <path
-              d="M37 24a13 13 0 0 1-22 9l-5-5"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="4"
-              strokeLinecap="round"
-            />
+          <svg
+            viewBox="0 0 48 48"
+            className="h-7 w-7 transition-transform duration-500 group-hover:rotate-180 sm:h-6 sm:w-6"
+            aria-hidden="true"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="4"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M40 11v10H30" />
+            <path d="M8 37V27h10" />
+            <path d="M38.6 21a16 16 0 0 0-27-6L8 19" />
+            <path d="M9.4 27a16 16 0 0 0 27 6L40 29" />
           </svg>
-          Randomize
+        </button>
+        <div className="min-w-0 flex-1 rounded-full border border-bark/10 bg-paper px-3 py-1.5 text-center text-xs font-semibold uppercase tracking-[0.16em] text-bark">
+          {activeFilterLabel}
+        </div>
+        <button
+          type="button"
+          onClick={() => setSearchOpen((current) => !current)}
+          aria-label="Search map tags and categories"
+          className="group inline-flex h-[4.9rem] w-[4.9rem] shrink-0 items-center justify-center rounded-full border border-bark/12 bg-white/78 text-bark shadow-[0_12px_30px_rgba(57,51,38,0.1)] backdrop-blur transition-all duration-200 hover:-translate-y-0.5 hover:bg-white active:scale-95 sm:h-[4.4rem] sm:w-[4.4rem]"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            className="h-7 w-7 sm:h-6 sm:w-6"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <circle cx="11" cy="11" r="6.5" />
+            <path d="m16 16 4 4" />
+          </svg>
         </button>
       </div>
+      {searchOpen ? (
+        <div
+          ref={searchPanelRef}
+          className="rounded-[28px] border border-white/72 bg-white/86 p-4 shadow-[0_18px_50px_rgba(57,51,38,0.1)] backdrop-blur"
+        >
+          <div className="flex items-center gap-3 rounded-[20px] border border-bark/10 bg-paper/82 px-4 py-3">
+            <svg
+              viewBox="0 0 24 24"
+              className="h-5 w-5 text-bark/52"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.1"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <circle cx="11" cy="11" r="6.5" />
+              <path d="m16 16 4 4" />
+            </svg>
+            <input
+              ref={searchInputRef}
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              placeholder="Search tags, categories, or regions"
+              className="w-full bg-transparent text-base text-bark outline-none placeholder:text-bark/42 sm:text-sm"
+            />
+          </div>
+          <div className="mt-3 grid gap-2">
+            {filteredSearchOptions.map((option) => (
+              <button
+                key={`${option.type}-${option.value}-${option.label}`}
+                type="button"
+                onClick={() => jumpToSearchOption(option)}
+                className="flex items-center justify-between rounded-[18px] border border-bark/8 bg-paper/78 px-4 py-3 text-left transition-all duration-200 hover:-translate-y-0.5 hover:bg-white"
+              >
+                <span className="text-sm font-medium text-bark">{option.label}</span>
+                <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-bark/46">
+                  {option.type}
+                </span>
+              </button>
+            ))}
+            {filteredSearchOptions.length === 0 ? (
+              <div className="rounded-[18px] border border-bark/8 bg-paper/68 px-4 py-3 text-sm text-bark/60">
+                No matching tags, categories, or regions yet.
+              </div>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
 
       <div className="relative overflow-hidden rounded-[34px] border border-bark/10 bg-[linear-gradient(145deg,#e0ecd6,#bfd4c3)] shadow-[0_18px_60px_rgba(88,73,37,0.08)]">
         <Map

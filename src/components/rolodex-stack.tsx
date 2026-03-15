@@ -1,6 +1,7 @@
 "use client";
 import dynamic from "next/dynamic";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { LAST_DECK_STORAGE_KEY } from "@/lib/navigation";
@@ -8,6 +9,7 @@ import { LAST_MAP_STORAGE_KEY } from "@/lib/navigation";
 import { TagChipLink } from "@/components/tag-chip-link";
 import mapWorld from "@/lib/mapworld.png";
 import {
+  entries as allEntries,
   getDiscoveryTags,
   getTagUsageCount,
   type NatureEntry,
@@ -22,6 +24,11 @@ type RolodexStackProps = {
 };
 
 type MotionPhase = "idle" | "leaving" | "entering";
+type SearchOption = {
+  label: string;
+  routeTag: string;
+  type: "tag" | "category";
+};
 
 function wrapIndex(index: number, length: number) {
   if (length === 0) {
@@ -54,6 +61,10 @@ function imageFill(image: string) {
   return undefined;
 }
 
+function titleCase(value: string) {
+  return value.replace(/[-_]/g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
 const DiscoverMoreCloudNoSSR = dynamic(
   () =>
     import("@/components/discover-more-cloud").then(
@@ -79,18 +90,23 @@ export function RolodexStack({
   accentTag,
   focusEntryId,
 }: RolodexStackProps) {
+  const router = useRouter();
   const [activeIndex, setActiveIndex] = useState(0);
   const [direction, setDirection] = useState<1 | -1>(1);
   const [phase, setPhase] = useState<MotionPhase>("idle");
   const [dragOffset, setDragOffset] = useState(0);
   const [imageIndexes, setImageIndexes] = useState<Record<string, number>>({});
   const [galleryEntryId, setGalleryEntryId] = useState<string | null>(null);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const touchStartX = useRef<number | null>(null);
   const touchStartY = useRef<number | null>(null);
   const pointerDragging = useRef(false);
   const pinchZooming = useRef(false);
   const queuedDirection = useRef<1 | -1 | null>(null);
   const galleryTouchStartX = useRef<number | null>(null);
+  const searchPanelRef = useRef<HTMLDivElement | null>(null);
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
 
   function triggerShift(nextDirection: 1 | -1) {
     if (entries.length <= 1) {
@@ -176,6 +192,40 @@ export function RolodexStack({
   }, [galleryEntry]);
 
   useEffect(() => {
+    if (!searchOpen) {
+      return;
+    }
+
+    searchInputRef.current?.focus();
+  }, [searchOpen]);
+
+  useEffect(() => {
+    if (!searchOpen) {
+      return;
+    }
+
+    const handlePointerDown = (event: PointerEvent) => {
+      if (!searchPanelRef.current?.contains(event.target as Node)) {
+        setSearchOpen(false);
+      }
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setSearchOpen(false);
+      }
+    };
+
+    window.addEventListener("pointerdown", handlePointerDown);
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("pointerdown", handlePointerDown);
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [searchOpen]);
+
+  useEffect(() => {
     if (typeof window === "undefined" || !galleryEntry) {
       return;
     }
@@ -218,6 +268,75 @@ export function RolodexStack({
       ) as Record<string, number>,
     [activeEntry],
   );
+  const allCollectionTags = useMemo(
+    () =>
+      Array.from(new Set(allEntries.flatMap((entry) => entry.tags))).sort((left, right) => {
+        const popularityDelta = getTagUsageCount(right) - getTagUsageCount(left);
+
+        if (popularityDelta !== 0) {
+          return popularityDelta;
+        }
+
+        return left.localeCompare(right);
+      }),
+    [],
+  );
+  const searchOptions = useMemo(() => {
+    const categoryRouteMap = new Map<string, string>();
+
+    for (const entry of allEntries) {
+      if (!entry.category || categoryRouteMap.has(entry.category)) {
+        continue;
+      }
+
+      const categoryTags = Array.from(
+        new Set(
+          allEntries
+            .filter((item) => item.category === entry.category)
+            .flatMap((item) => item.tags),
+        ),
+      );
+      const plural = `${entry.category}s`;
+      const routeTag =
+        categoryTags.find((tag) => tag === plural) ??
+        categoryTags.find((tag) => tag === entry.category) ??
+        categoryTags.find((tag) => tag.includes(entry.category ?? "")) ??
+        categoryTags.find((tag) => ["animals", "flowers", "trees", "birds", "insects", "shrubs"].includes(tag)) ??
+        categoryTags[0];
+
+      if (routeTag) {
+        categoryRouteMap.set(entry.category, routeTag);
+      }
+    }
+
+    const tagOptions: SearchOption[] = allCollectionTags.map((tag) => ({
+      label: titleCase(tag),
+      routeTag: tag,
+      type: "tag",
+    }));
+    const categoryOptions: SearchOption[] = Array.from(categoryRouteMap.entries()).map(
+      ([category, routeTag]) => ({
+        label: titleCase(category),
+        routeTag,
+        type: "category",
+      }),
+    );
+
+    return [...categoryOptions, ...tagOptions];
+  }, [allCollectionTags]);
+  const filteredSearchOptions = useMemo(() => {
+    const normalizedQuery = searchQuery.trim().toLowerCase();
+
+    if (!normalizedQuery) {
+      const categories = searchOptions.filter((option) => option.type === "category").slice(0, 4);
+      const tags = searchOptions.filter((option) => option.type === "tag").slice(0, 8);
+      return [...categories, ...tags];
+    }
+
+    return searchOptions
+      .filter((option) => option.label.toLowerCase().includes(normalizedQuery))
+      .slice(0, 10);
+  }, [searchOptions, searchQuery]);
   const handlePointerDown = (event: React.PointerEvent<HTMLElement>) => {
     if (phase !== "idle") {
       return;
@@ -389,12 +508,132 @@ export function RolodexStack({
     setGalleryEntryId(activeEntry.id);
   };
 
+  const jumpToRandomTag = () => {
+    if (!accentTag) {
+      return;
+    }
+
+    const candidateTags = allCollectionTags.filter((tag) => tag !== accentTag);
+
+    if (candidateTags.length === 0) {
+      return;
+    }
+
+    const nextTag =
+      candidateTags[Math.floor(Math.random() * candidateTags.length)] ?? accentTag;
+
+    router.push(`/tag/${encodeURIComponent(nextTag)}`);
+  };
+
+  const jumpToSearchOption = (option: SearchOption) => {
+    setSearchOpen(false);
+    setSearchQuery("");
+    router.push(`/tag/${encodeURIComponent(option.routeTag)}`);
+  };
+
   return (
     <section className="space-y-8">
       <div className="relative z-0 mx-auto flex max-w-3xl flex-col items-center">
         <div className="mb-4 flex flex-wrap items-center justify-center gap-2">
-          {accentTag ? <TagChipLink tag={accentTag} /> : null}
+          {accentTag ? (
+            <>
+              <button
+                type="button"
+                onClick={jumpToRandomTag}
+                aria-label={`Jump to a random tag deck from ${accentTag}`}
+                className="group inline-flex h-[4.9rem] w-[4.9rem] items-center justify-center rounded-full border border-bark/12 bg-white/78 text-bark shadow-[0_12px_30px_rgba(57,51,38,0.1)] backdrop-blur transition-all duration-200 hover:-translate-y-0.5 hover:bg-white active:scale-95 sm:h-[4.4rem] sm:w-[4.4rem]"
+              >
+                <svg
+                  viewBox="0 0 48 48"
+                  className="h-7 w-7 transition-transform duration-500 group-hover:rotate-180 sm:h-6 sm:w-6"
+                  aria-hidden="true"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M40 11v10H30" />
+                  <path d="M8 37V27h10" />
+                  <path
+                    d="M38.6 21a16 16 0 0 0-27-6L8 19"
+                  />
+                  <path d="M9.4 27a16 16 0 0 0 27 6L40 29" />
+                </svg>
+              </button>
+              <TagChipLink tag={accentTag} />
+              <button
+                type="button"
+                onClick={() => setSearchOpen((current) => !current)}
+                aria-label="Search tags and categories"
+                className="group inline-flex h-[4.9rem] w-[4.9rem] items-center justify-center rounded-full border border-bark/12 bg-white/78 text-bark shadow-[0_12px_30px_rgba(57,51,38,0.1)] backdrop-blur transition-all duration-200 hover:-translate-y-0.5 hover:bg-white active:scale-95 sm:h-[4.4rem] sm:w-[4.4rem]"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  className="h-7 w-7 sm:h-6 sm:w-6"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <circle cx="11" cy="11" r="6.5" />
+                  <path d="m16 16 4 4" />
+                </svg>
+              </button>
+            </>
+          ) : null}
         </div>
+        {searchOpen ? (
+          <div
+            ref={searchPanelRef}
+            className="mb-4 w-full max-w-[29rem] rounded-[28px] border border-white/72 bg-white/86 p-4 shadow-[0_18px_50px_rgba(57,51,38,0.1)] backdrop-blur"
+          >
+            <div className="flex items-center gap-3 rounded-[20px] border border-bark/10 bg-paper/82 px-4 py-3">
+              <svg
+                viewBox="0 0 24 24"
+                className="h-5 w-5 text-bark/52"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.1"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <circle cx="11" cy="11" r="6.5" />
+                <path d="m16 16 4 4" />
+              </svg>
+              <input
+                ref={searchInputRef}
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                placeholder="Search tags or categories"
+                className="w-full bg-transparent text-base text-bark outline-none placeholder:text-bark/42 sm:text-sm"
+              />
+            </div>
+            <div className="mt-3 grid gap-2">
+              {filteredSearchOptions.map((option) => (
+                <button
+                  key={`${option.type}-${option.routeTag}-${option.label}`}
+                  type="button"
+                  onClick={() => jumpToSearchOption(option)}
+                  className="flex items-center justify-between rounded-[18px] border border-bark/8 bg-paper/78 px-4 py-3 text-left transition-all duration-200 hover:-translate-y-0.5 hover:bg-white"
+                >
+                  <span className="text-sm font-medium text-bark">{option.label}</span>
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-bark/46">
+                    {option.type}
+                  </span>
+                </button>
+              ))}
+              {filteredSearchOptions.length === 0 ? (
+                <div className="rounded-[18px] border border-bark/8 bg-paper/68 px-4 py-3 text-sm text-bark/60">
+                  No matching tags or categories yet.
+                </div>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
 
         <div className="relative mx-auto flex min-h-[34rem] w-full max-w-[26rem] items-center justify-center perspective-[1800px] sm:min-h-[38rem]">
           <div className="pointer-events-none absolute inset-x-8 bottom-5 h-20 rounded-full bg-[radial-gradient(circle,rgba(40,48,39,0.22),transparent_72%)] blur-2xl" />
