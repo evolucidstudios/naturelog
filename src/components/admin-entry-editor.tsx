@@ -54,6 +54,17 @@ function safeFileName(name: string) {
   return name.replace(/[^a-zA-Z0-9._-]/g, "-").toLowerCase();
 }
 
+function createUploadId() {
+  if (
+    typeof globalThis.crypto !== "undefined" &&
+    typeof globalThis.crypto.randomUUID === "function"
+  ) {
+    return globalThis.crypto.randomUUID();
+  }
+
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
 export function AdminEntryEditor({
   mode,
   initialEntry = createEmptyAdminDraft(),
@@ -99,7 +110,7 @@ export function AdminEntryEditor({
     const uploadedPaths: string[] = [];
 
     for (const file of selectedFiles) {
-      const path = `entries/${Date.now()}-${crypto.randomUUID()}-${safeFileName(file.name)}`;
+      const path = `entries/${Date.now()}-${createUploadId()}-${safeFileName(file.name)}`;
       const { error } = await supabase.storage.from("nature-images").upload(path, file, {
         upsert: false,
       });

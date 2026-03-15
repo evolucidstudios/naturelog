@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import exifr from "exifr";
 import OpenAI from "openai";
+import { zodTextFormat } from "openai/helpers/zod";
 import { z } from "zod";
 import { requireOwner } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
@@ -31,10 +32,6 @@ const analysisSchema = z.object({
   confidence: z.number().nullable().default(null),
 });
 
-function stripJsonEnvelope(value: string) {
-  return value.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/```$/i, "").trim();
-}
-
 export async function POST(request: Request) {
   await requireOwner();
 
@@ -57,7 +54,7 @@ export async function POST(request: Request) {
     apiKey: openAiApiKey,
   });
 
-  const response = await client.responses.create({
+  const response = await client.responses.parse({
     model: "gpt-4.1-mini",
     input: [
       {
@@ -76,21 +73,22 @@ export async function POST(request: Request) {
         ],
       },
     ],
+    text: {
+      format: zodTextFormat(analysisSchema, "nature_log_analysis"),
+    },
   });
 
-  const parsed = analysisSchema.safeParse(JSON.parse(stripJsonEnvelope(response.output_text)));
+  const analysis = response.output_parsed;
 
-  if (!parsed.success) {
+  if (!analysis) {
     return NextResponse.json(
       {
         error: "The AI response was not in the expected format.",
-        details: parsed.error.flatten(),
+        details: response.output_text,
       },
       { status: 500 },
     );
   }
-
-  const analysis = parsed.data;
 
   if (typeof exif?.latitude === "number" && typeof exif?.longitude === "number") {
     analysis.location.latitude = exif.latitude;
