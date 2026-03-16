@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
@@ -185,6 +186,17 @@ export function LoginForm({ ownerEmail }: LoginFormProps) {
         >
           {mode === "sign-in" ? "Create owner account" : "Back to sign in"}
         </button>
+      </div>
+
+      <div className="mt-6 flex justify-center">
+        <Link
+          href="/"
+          target="_blank"
+          rel="noreferrer"
+          className="text-[11px] uppercase tracking-[0.24em] text-bark/46 transition-colors duration-200 hover:text-bark/72"
+        >
+          View Nature Log
+        </Link>
       </div>
     </div>
   );

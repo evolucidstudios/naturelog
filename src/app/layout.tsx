@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { FloatingMapButton } from "@/components/floating-map-button";
+import { PublicLoginLink } from "@/components/public-login-link";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -18,6 +19,7 @@ export default function RootLayout({
       <body>
         {children}
         <FloatingMapButton />
+        <PublicLoginLink />
       </body>
     </html>
   );

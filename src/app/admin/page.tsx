@@ -54,6 +54,8 @@ export default async function AdminPage() {
                   </Link>
                   <Link
                     href={getSuggestedDeckHref(entry)}
+                    target="_blank"
+                    rel="noreferrer"
                     className="rounded-full border border-bark/10 bg-paper px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-bark"
                   >
                     View
