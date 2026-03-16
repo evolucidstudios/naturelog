@@ -12,7 +12,7 @@ export function LoginForm({ ownerEmail }: LoginFormProps) {
   const router = useRouter();
   const supabase = createSupabaseBrowserClient();
   const [mode, setMode] = useState<"sign-in" | "sign-up">("sign-in");
-  const [email, setEmail] = useState(ownerEmail);
+  const [email, setEmail] = useState(ownerEmail.trim());
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -22,11 +22,12 @@ export function LoginForm({ ownerEmail }: LoginFormProps) {
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setMessage(null);
+    const normalizedEmail = email.trim().toLowerCase();
 
     startTransition(async () => {
       if (mode === "sign-up") {
         const { error } = await supabase.auth.signUp({
-          email,
+          email: normalizedEmail,
           password,
         });
 
@@ -39,7 +40,7 @@ export function LoginForm({ ownerEmail }: LoginFormProps) {
       }
 
       const { error } = await supabase.auth.signInWithPassword({
-        email,
+        email: normalizedEmail,
         password,
       });
 
@@ -54,7 +55,9 @@ export function LoginForm({ ownerEmail }: LoginFormProps) {
   };
 
   const handleResetPassword = () => {
-    if (!email) {
+    const normalizedEmail = email.trim().toLowerCase();
+
+    if (!normalizedEmail) {
       setMessage("Enter your owner email first so I know where to send the reset link.");
       return;
     }
@@ -65,7 +68,7 @@ export function LoginForm({ ownerEmail }: LoginFormProps) {
         typeof window === "undefined"
           ? undefined
           : `${window.location.origin}/reset-password`;
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
         redirectTo,
       });
 
@@ -150,7 +153,7 @@ export function LoginForm({ ownerEmail }: LoginFormProps) {
               const nextMode = current === "sign-in" ? "sign-up" : "sign-in";
 
               if (nextMode === "sign-up" && ownerEmail) {
-                setEmail(ownerEmail);
+                setEmail(ownerEmail.trim());
               }
 
               return nextMode;
