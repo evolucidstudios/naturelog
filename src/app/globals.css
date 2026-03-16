@@ -103,20 +103,20 @@ a {
 
 .card-title-glow {
   text-shadow:
-    -1px -1px 0 rgba(18, 22, 19, 0.55),
-    1px -1px 0 rgba(18, 22, 19, 0.55),
-    -1px 1px 0 rgba(18, 22, 19, 0.55),
-    1px 1px 0 rgba(18, 22, 19, 0.55),
-    0 6px 18px rgba(0, 0, 0, 0.22);
+    -1.5px -1.5px 0 rgba(10, 12, 11, 0.84),
+    1.5px -1.5px 0 rgba(10, 12, 11, 0.84),
+    -1.5px 1.5px 0 rgba(10, 12, 11, 0.84),
+    1.5px 1.5px 0 rgba(10, 12, 11, 0.84),
+    0 8px 22px rgba(0, 0, 0, 0.3);
 }
 
 .card-subtitle-glow {
   text-shadow:
-    -1px -1px 0 rgba(18, 22, 19, 0.4),
-    1px -1px 0 rgba(18, 22, 19, 0.4),
-    -1px 1px 0 rgba(18, 22, 19, 0.4),
-    1px 1px 0 rgba(18, 22, 19, 0.4),
-    0 4px 12px rgba(0, 0, 0, 0.2);
+    -1px -1px 0 rgba(10, 12, 11, 0.72),
+    1px -1px 0 rgba(10, 12, 11, 0.72),
+    -1px 1px 0 rgba(10, 12, 11, 0.72),
+    1px 1px 0 rgba(10, 12, 11, 0.72),
+    0 6px 16px rgba(0, 0, 0, 0.26);
 }
 
 .mapboxgl-popup-content {
