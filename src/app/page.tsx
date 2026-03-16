@@ -117,12 +117,14 @@ export default async function Home() {
                         <p className="text-[11px] uppercase tracking-[0.32em] text-paper/68">
                           Featured specimen
                         </p>
-                        <h2 className="mt-4 max-w-xs text-4xl leading-none font-semibold sm:text-5xl">
-                          {featuredEntry.commonName}
-                        </h2>
-                        <p className="mt-3 text-sm italic text-paper/70 sm:text-base">
-                          {featuredEntry.scientificName}
-                        </p>
+                        <div className="card-name-wrap mt-4 max-w-xs">
+                          <h2 className="card-title-glow text-4xl leading-none font-semibold sm:text-5xl">
+                            {featuredEntry.commonName}
+                          </h2>
+                          <p className="card-subtitle-glow mt-3 text-sm italic text-paper/84 sm:text-base">
+                            {featuredEntry.scientificName}
+                          </p>
+                        </div>
                       </div>
                       <span className="rounded-full border border-white/12 bg-white/8 px-3 py-1 text-[10px] uppercase tracking-[0.22em] text-paper/76">
                         Live card

@@ -34,76 +34,85 @@ const analysisSchema = z.object({
 });
 
 export async function POST(request: Request) {
-  await requireOwner();
+  try {
+    await requireOwner();
 
-  if (!isOpenAiConfigured()) {
-    return NextResponse.json({ error: "OPENAI_API_KEY is missing." }, { status: 500 });
-  }
+    if (!isOpenAiConfigured()) {
+      return NextResponse.json({ error: "OPENAI_API_KEY is missing." }, { status: 500 });
+    }
 
-  const formData = await request.formData();
-  const image = formData.get("image");
+    const formData = await request.formData();
+    const image = formData.get("image");
 
-  if (!(image instanceof File)) {
-    return NextResponse.json({ error: "No image file received." }, { status: 400 });
-  }
+    if (!(image instanceof File)) {
+      return NextResponse.json({ error: "No image file received." }, { status: 400 });
+    }
 
-  const bytes = Buffer.from(await image.arrayBuffer());
-  const dataUrl = `data:${image.type};base64,${bytes.toString("base64")}`;
-  const exif = await exifr.parse(bytes, { gps: true }).catch(() => null);
+    const bytes = Buffer.from(await image.arrayBuffer());
+    const dataUrl = `data:${image.type};base64,${bytes.toString("base64")}`;
+    const exif = await exifr.parse(bytes, { gps: true }).catch(() => null);
 
-  const client = new OpenAI({
-    apiKey: openAiApiKey,
-  });
+    const client = new OpenAI({
+      apiKey: openAiApiKey,
+    });
 
-  const response = await client.responses.parse({
-    model: "gpt-4.1-mini",
-    input: [
-      {
-        role: "user",
-        content: [
-          {
-            type: "input_text",
-            text:
-              "Analyze this nature photo and return only JSON. Identify the likely subject, write a rich collectible-card description, and generate a strong field card for a long-term nature archive focused on foraging and discovery. Include useful tags, average lifespan when it is reasonably knowable, edible status, a safety-minded edible note, good uses, possible dish or tea ideas when relevant, fun facts, and simple care/location notes when relevant. If this is an animal, bird, fish, or insect, mark edible as not-edible unless you are highly certain the card should be for foraging. Never invent dangerous claims with high confidence. Use empty strings or empty arrays when unsure. JSON keys must be: commonName, scientificName, category, note, tags, lifespan, edible, edibleNote, uses, culinaryIdeas, goodFor, funFacts, care { water, light, season }, location { place, latitude, longitude }, confidence.",
-          },
-          {
-            type: "input_image",
-            image_url: dataUrl,
-            detail: "high",
-          },
-        ],
+    const response = await client.responses.parse({
+      model: "gpt-4.1-mini",
+      input: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "input_text",
+              text:
+                "Analyze this nature photo and return only JSON. Identify the likely subject, write a rich collectible-card description, and generate a strong field card for a long-term nature archive focused on foraging and discovery. Include useful tags, average lifespan when it is reasonably knowable, edible status, a safety-minded edible note, good uses, possible dish or tea ideas when relevant, fun facts, and simple care/location notes when relevant. If this is an animal, bird, fish, or insect, mark edible as not-edible unless you are highly certain the card should be for foraging. Never invent dangerous claims with high confidence. Use empty strings or empty arrays when unsure. JSON keys must be: commonName, scientificName, category, note, tags, lifespan, edible, edibleNote, uses, culinaryIdeas, goodFor, funFacts, care { water, light, season }, location { place, latitude, longitude }, confidence.",
+            },
+            {
+              type: "input_image",
+              image_url: dataUrl,
+              detail: "high",
+            },
+          ],
+        },
+      ],
+      text: {
+        format: zodTextFormat(analysisSchema, "nature_log_analysis"),
       },
-    ],
-    text: {
-      format: zodTextFormat(analysisSchema, "nature_log_analysis"),
-    },
-  });
+    });
 
-  const analysis = response.output_parsed;
+    const analysis = response.output_parsed;
 
-  if (!analysis) {
+    if (!analysis) {
+      return NextResponse.json(
+        {
+          error: "The AI response was not in the expected format.",
+          details: response.output_text,
+        },
+        { status: 500 },
+      );
+    }
+
+    if (typeof exif?.latitude === "number" && typeof exif?.longitude === "number") {
+      analysis.location.latitude = exif.latitude;
+      analysis.location.longitude = exif.longitude;
+    }
+
+    const admin = createSupabaseAdminClient();
+    await admin.from("ai_runs").insert({
+      model: "gpt-4.1-mini",
+      source_filename: image.name,
+      source_mime: image.type,
+      confidence: analysis.confidence,
+      result: analysis,
+    });
+
+    return NextResponse.json({ analysis });
+  } catch (error) {
     return NextResponse.json(
       {
-        error: "The AI response was not in the expected format.",
-        details: response.output_text,
+        error: error instanceof Error ? error.message : "AI analysis failed.",
       },
       { status: 500 },
     );
   }
-
-  if (typeof exif?.latitude === "number" && typeof exif?.longitude === "number") {
-    analysis.location.latitude = exif.latitude;
-    analysis.location.longitude = exif.longitude;
-  }
-
-  const admin = createSupabaseAdminClient();
-  await admin.from("ai_runs").insert({
-    model: "gpt-4.1-mini",
-    source_filename: image.name,
-    source_mime: image.type,
-    confidence: analysis.confidence,
-    result: analysis,
-  });
-
-  return NextResponse.json({ analysis });
 }

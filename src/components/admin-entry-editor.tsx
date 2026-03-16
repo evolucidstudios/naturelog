@@ -134,48 +134,55 @@ export function AdminEntryEditor({
 
     setMessage(null);
     startAnalysisTransition(async () => {
-      const formData = new FormData();
-      formData.append("image", selectedFiles[0]);
+      try {
+        const formData = new FormData();
+        formData.append("image", selectedFiles[0]);
 
-      const response = await fetch("/api/ai/analyze", {
-        method: "POST",
-        body: formData,
-      });
-      const payload = (await response.json()) as { analysis?: AnalyzeResult; error?: string };
+        const response = await fetch("/api/ai/analyze", {
+          method: "POST",
+          body: formData,
+        });
+        const contentType = response.headers.get("content-type") ?? "";
+        const payload = contentType.includes("application/json")
+          ? ((await response.json()) as { analysis?: AnalyzeResult; error?: string })
+          : { error: `Analysis failed with ${response.status}.` };
 
-      if (!response.ok || !payload.analysis) {
-        setMessage(payload.error ?? "Analysis failed.");
-        return;
+        if (!response.ok || !payload.analysis) {
+          setMessage(payload.error ?? "Analysis failed.");
+          return;
+        }
+
+        const { analysis } = payload;
+        setDraft((current) => ({
+          ...current,
+          commonName: analysis.commonName || current.commonName,
+          scientificName: analysis.scientificName || current.scientificName,
+          category: analysis.category || current.category,
+          note: analysis.note || current.note,
+          tags: analysis.tags.length > 0 ? analysis.tags : current.tags,
+          lifespan: analysis.lifespan || current.lifespan,
+          edible: analysis.edible,
+          edibleNote: analysis.edibleNote || current.edibleNote,
+          uses: analysis.uses.length > 0 ? analysis.uses : current.uses,
+          culinaryIdeas:
+            analysis.culinaryIdeas.length > 0 ? analysis.culinaryIdeas : current.culinaryIdeas,
+          goodFor: analysis.goodFor.length > 0 ? analysis.goodFor : current.goodFor,
+          funFacts: analysis.funFacts.length > 0 ? analysis.funFacts : current.funFacts,
+          care: {
+            water: analysis.care.water || current.care.water,
+            light: analysis.care.light || current.care.light,
+            season: analysis.care.season || current.care.season,
+          },
+          location: {
+            place: analysis.location.place || current.location.place,
+            latitude: analysis.location.latitude ?? current.location.latitude,
+            longitude: analysis.location.longitude ?? current.location.longitude,
+          },
+        }));
+        setMessage("AI analysis applied. Review anything that looks off before saving.");
+      } catch (error) {
+        setMessage(error instanceof Error ? error.message : "Analysis failed.");
       }
-
-      const { analysis } = payload;
-      setDraft((current) => ({
-        ...current,
-        commonName: analysis.commonName || current.commonName,
-        scientificName: analysis.scientificName || current.scientificName,
-        category: analysis.category || current.category,
-        note: analysis.note || current.note,
-        tags: analysis.tags.length > 0 ? analysis.tags : current.tags,
-        lifespan: analysis.lifespan || current.lifespan,
-        edible: analysis.edible,
-        edibleNote: analysis.edibleNote || current.edibleNote,
-        uses: analysis.uses.length > 0 ? analysis.uses : current.uses,
-        culinaryIdeas:
-          analysis.culinaryIdeas.length > 0 ? analysis.culinaryIdeas : current.culinaryIdeas,
-        goodFor: analysis.goodFor.length > 0 ? analysis.goodFor : current.goodFor,
-        funFacts: analysis.funFacts.length > 0 ? analysis.funFacts : current.funFacts,
-        care: {
-          water: analysis.care.water || current.care.water,
-          light: analysis.care.light || current.care.light,
-          season: analysis.care.season || current.care.season,
-        },
-        location: {
-          place: analysis.location.place || current.location.place,
-          latitude: analysis.location.latitude ?? current.location.latitude,
-          longitude: analysis.location.longitude ?? current.location.longitude,
-        },
-      }));
-      setMessage("AI analysis applied. Review anything that looks off before saving.");
     });
   };
 
