@@ -547,7 +547,10 @@ export function RolodexStack({
                   <path d="M9.4 27a16 16 0 0 0 27 6L40 29" />
                 </svg>
               </button>
-              <TagChipLink tag={accentTag} />
+              <TagChipLink
+                tag={accentTag}
+                className="min-h-[3.75rem] px-5 text-sm sm:min-h-[3.4rem] sm:px-4"
+              />
               <button
                 type="button"
                 onClick={() => setSearchOpen((current) => !current)}
