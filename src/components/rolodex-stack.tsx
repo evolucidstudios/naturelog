@@ -676,14 +676,12 @@ export function RolodexStack({
                     <div className="relative flex min-h-[30rem] flex-col justify-between sm:min-h-[34rem]">
                       <div className="flex items-start justify-between gap-4">
                         <div className="max-w-[12rem]">
-                          <div className="card-name-wrap mt-2">
-                            <p className="card-title-glow text-4xl leading-none font-semibold sm:text-5xl">
-                              {entry.commonName}
-                            </p>
-                            <p className="card-subtitle-glow mt-3 text-sm italic text-paper/84 sm:text-base">
-                              {entry.scientificName}
-                            </p>
-                          </div>
+                          <p className="card-title-glow mt-3 text-4xl leading-none font-semibold sm:text-5xl">
+                            {entry.commonName}
+                          </p>
+                          <p className="card-subtitle-glow mt-3 text-sm italic text-paper/84 sm:text-base">
+                            {entry.scientificName}
+                          </p>
                         </div>
                       </div>
 
