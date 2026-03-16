@@ -2,6 +2,15 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { supabaseAnonKey, supabaseUrl } from "@/lib/supabase/env";
 
+function clearSupabaseAuthCookies(request: NextRequest, response: NextResponse) {
+  request.cookies
+    .getAll()
+    .filter(({ name }) => name.startsWith("sb-"))
+    .forEach(({ name }) => {
+      response.cookies.delete(name);
+    });
+}
+
 export async function updateSession(request: NextRequest) {
   const response = NextResponse.next({
     request,
@@ -21,7 +30,11 @@ export async function updateSession(request: NextRequest) {
     },
   });
 
-  await supabase.auth.getUser();
+  try {
+    await supabase.auth.getUser();
+  } catch {
+    clearSupabaseAuthCookies(request, response);
+  }
 
   return response;
 }
