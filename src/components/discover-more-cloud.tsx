@@ -93,6 +93,11 @@ export function DiscoverMoreCloud({ tags, tagCounts }: DiscoverMoreCloudProps) {
       </div>
 
       <div className="mt-8 flex flex-wrap items-center justify-center gap-x-4 gap-y-6 pb-6 sm:gap-x-6">
+        {discoveryTags.length === 0 ? (
+          <p className="text-sm leading-6 text-ink/58">
+            More tags will start appearing here as the collection grows.
+          </p>
+        ) : null}
         {discoveryTags.map((tag, index) => {
           const weight = discoveryTagWeights[tag] ?? 1;
 

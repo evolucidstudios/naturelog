@@ -409,11 +409,11 @@ export function MapExplorer({
           type="button"
           onClick={focusRandomMapSlice}
           aria-label="Randomize map focus"
-          className="group inline-flex h-[4.9rem] w-[4.9rem] shrink-0 items-center justify-center rounded-full border border-bark/12 bg-white/78 text-bark shadow-[0_12px_30px_rgba(57,51,38,0.1)] backdrop-blur transition-all duration-200 hover:-translate-y-0.5 hover:bg-white active:scale-95 sm:h-[4.4rem] sm:w-[4.4rem]"
+          className="group inline-flex h-[3.75rem] w-[3.75rem] shrink-0 items-center justify-center rounded-full border border-bark/12 bg-white/78 text-bark shadow-[0_12px_30px_rgba(57,51,38,0.1)] backdrop-blur transition-all duration-200 hover:-translate-y-0.5 hover:bg-white active:scale-95 sm:h-[3.4rem] sm:w-[3.4rem]"
         >
           <svg
             viewBox="0 0 48 48"
-            className="h-7 w-7 transition-transform duration-500 group-hover:rotate-180 sm:h-6 sm:w-6"
+            className="h-5 w-5 transition-transform duration-500 group-hover:rotate-180 sm:h-5 sm:w-5"
             aria-hidden="true"
             fill="none"
             stroke="currentColor"
@@ -434,11 +434,11 @@ export function MapExplorer({
           type="button"
           onClick={() => setSearchOpen((current) => !current)}
           aria-label="Search map tags and categories"
-          className="group inline-flex h-[4.9rem] w-[4.9rem] shrink-0 items-center justify-center rounded-full border border-bark/12 bg-white/78 text-bark shadow-[0_12px_30px_rgba(57,51,38,0.1)] backdrop-blur transition-all duration-200 hover:-translate-y-0.5 hover:bg-white active:scale-95 sm:h-[4.4rem] sm:w-[4.4rem]"
+          className="group inline-flex h-[3.75rem] w-[3.75rem] shrink-0 items-center justify-center rounded-full border border-bark/12 bg-white/78 text-bark shadow-[0_12px_30px_rgba(57,51,38,0.1)] backdrop-blur transition-all duration-200 hover:-translate-y-0.5 hover:bg-white active:scale-95 sm:h-[3.4rem] sm:w-[3.4rem]"
         >
           <svg
             viewBox="0 0 24 24"
-            className="h-7 w-7 sm:h-6 sm:w-6"
+            className="h-5 w-5 sm:h-5 sm:w-5"
             fill="none"
             stroke="currentColor"
             strokeWidth="2.2"

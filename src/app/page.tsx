@@ -47,6 +47,15 @@ export default async function Home() {
     );
   }
 
+  const featuredImage = featuredEntry.images[0];
+  const featuredImageStyle = featuredImage
+    ? {
+        backgroundImage: `linear-gradient(180deg, rgba(8, 10, 9, 0.08), rgba(8, 10, 9, 0.42)), url("${featuredImage}")`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+      }
+    : undefined;
+
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(217,238,227,0.88),transparent_30%),linear-gradient(180deg,#f7f3ea_0%,#f1e8d8_38%,#eee2cf_100%)] text-ink">
       <section className="mx-auto flex w-full max-w-6xl flex-col px-4 py-5 sm:px-6 sm:py-6 lg:px-8">
@@ -95,7 +104,11 @@ export default async function Home() {
             </div>
 
             <div className="group w-full max-w-[25rem] rounded-[34px] border border-white/80 bg-[linear-gradient(160deg,#6f9473_0%,#486768_54%,#2f3c3c_100%)] p-4 text-paper shadow-[0_28px_80px_rgba(52,60,48,0.24)] transition-transform duration-300 hover:-translate-y-1 sm:p-5">
-              <div className="relative overflow-hidden rounded-[28px] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.24),transparent_26%),linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.02))] p-5 sm:p-6">
+              <div
+                className="relative overflow-hidden rounded-[28px] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.24),transparent_26%),linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.02))] p-5 sm:p-6"
+                style={featuredImageStyle}
+              >
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.18),transparent_24%),linear-gradient(180deg,rgba(255,255,255,0.04),rgba(0,0,0,0.28))]" />
                 <div className="absolute right-4 top-4 h-16 w-16 rounded-full border border-white/12 bg-[radial-gradient(circle,rgba(255,255,255,0.24),rgba(255,255,255,0.02))] blur-[1px] sm:h-20 sm:w-20" />
                 <div className="relative flex min-h-[30rem] flex-col justify-between sm:min-h-[34rem]">
                   <div>
