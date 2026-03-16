@@ -49,6 +49,13 @@ export function LoginForm({ ownerEmail }: LoginFormProps) {
         return;
       }
 
+      setMessage("Signed in. Opening the admin...");
+
+      if (typeof window !== "undefined") {
+        window.location.assign("/admin");
+        return;
+      }
+
       router.push("/admin");
       router.refresh();
     });
