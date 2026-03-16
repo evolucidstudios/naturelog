@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { TagChipLink } from "@/components/tag-chip-link";
 import {
-  buildMapRegionsFromEntries,
   getCollectionTags,
   getDeckHrefForEntryFromEntries,
   getTagCounts,
@@ -13,16 +12,12 @@ export const dynamic = "force-dynamic";
 export default async function Home() {
   const entries = await getSiteEntries();
   const featuredEntry = entries[0];
+  const featuredDeckHref = getDeckHrefForEntryFromEntries(featuredEntry, entries);
   const tagCounts = getTagCounts(entries);
   const popularTags = getCollectionTags(entries).slice(0, 8);
-  const places = buildMapRegionsFromEntries(entries).slice(0, 3);
   const quickStats = [
     { label: "Cards logged", value: String(entries.length) },
     { label: "Live tags", value: String(Object.keys(tagCounts).length) },
-    {
-      label: "Places mapped",
-      value: String(new Set(entries.map((entry) => entry.location.place)).size),
-    },
   ];
 
   if (!featuredEntry) {
@@ -36,7 +31,7 @@ export default async function Home() {
           </p>
           <div className="mt-5 flex justify-center gap-3">
             <Link className="chip" href="/login">
-              Owner login
+              Login
             </Link>
             <Link className="chip" href="/map">
               Explore map
@@ -74,14 +69,14 @@ export default async function Home() {
           </div>
 
           <div className="mt-6 flex flex-wrap items-center justify-center gap-2 sm:gap-3">
-            <Link className="chip" href={getDeckHrefForEntryFromEntries(featuredEntry, entries)}>
-              Open nature deck
+            <Link className="chip" href={featuredDeckHref}>
+              Nature Deck
             </Link>
             <Link className="chip" href="/map">
               Explore map
             </Link>
             <Link className="chip" href="/login">
-              Owner login
+              Login
             </Link>
           </div>
         </header>
@@ -103,7 +98,10 @@ export default async function Home() {
               ))}
             </div>
 
-            <div className="group w-full max-w-[25rem] rounded-[34px] border border-white/80 bg-[linear-gradient(160deg,#6f9473_0%,#486768_54%,#2f3c3c_100%)] p-4 text-paper shadow-[0_28px_80px_rgba(52,60,48,0.24)] transition-transform duration-300 hover:-translate-y-1 sm:p-5">
+            <Link
+              href={featuredDeckHref}
+              className="group block w-full max-w-[25rem] rounded-[34px] border border-white/80 bg-[linear-gradient(160deg,#6f9473_0%,#486768_54%,#2f3c3c_100%)] p-4 text-paper shadow-[0_28px_80px_rgba(52,60,48,0.24)] transition-transform duration-300 hover:-translate-y-1 sm:p-5"
+            >
               <div
                 className="relative overflow-hidden rounded-[28px] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.24),transparent_26%),linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.02))] p-5 sm:p-6"
                 style={featuredImageStyle}
@@ -142,7 +140,12 @@ export default async function Home() {
                   <div className="space-y-4">
                     <div className="flex flex-wrap gap-2">
                       {featuredEntry.tags.slice(0, 6).map((tag) => (
-                        <TagChipLink key={tag} tag={tag} variant="soft" />
+                        <span
+                          key={tag}
+                          className="chip chip-soft pointer-events-none"
+                        >
+                          {tag}
+                        </span>
                       ))}
                     </div>
 
@@ -165,16 +168,7 @@ export default async function Home() {
                   </div>
                 </div>
               </div>
-            </div>
-
-            <div className="mt-4 flex flex-wrap justify-center gap-2">
-              <Link className="chip" href={getDeckHrefForEntryFromEntries(featuredEntry, entries)}>
-                Open this tag stack
-              </Link>
-              <Link className="chip" href={`/card/${featuredEntry.id}`}>
-                Open deep link
-              </Link>
-            </div>
+            </Link>
           </div>
         </section>
 
@@ -183,14 +177,8 @@ export default async function Home() {
             <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
               <div>
                 <p className="text-sm uppercase tracking-[0.24em] text-moss">Popular tags</p>
-                <h3 className="mt-2 text-3xl font-semibold text-bark">
-                  Open a stack by theme
-                </h3>
+                <h3 className="mt-2 text-3xl font-semibold text-bark">Open a stack</h3>
               </div>
-              <p className="max-w-xl text-sm leading-6 text-ink/70">
-                Every tag opens the collectible deck view, so the library can keep expanding
-                without losing the card-first feel.
-              </p>
             </div>
 
             <div className="mt-5 flex flex-wrap gap-3">
@@ -199,24 +187,7 @@ export default async function Home() {
               ))}
             </div>
           </div>
-
-          <div className="grid gap-5 lg:grid-cols-[0.92fr_1.08fr]">
-            <div className="rounded-[28px] border border-bark/10 bg-bark p-5 text-paper shadow-[0_18px_60px_rgba(57,51,38,0.2)] sm:p-6">
-              <p className="text-sm uppercase tracking-[0.24em] text-sand">Places</p>
-              <div className="mt-4 grid gap-3">
-                {places.map((region) => (
-                  <Link
-                    key={region.slug}
-                    href="/map"
-                    className="rounded-[22px] border border-white/10 bg-white/7 px-4 py-3 transition-colors hover:bg-white/12"
-                  >
-                    <p className="font-semibold">{region.name}</p>
-                    <p className="text-sm leading-6 text-paper/70">{region.summary}</p>
-                  </Link>
-                ))}
-              </div>
-            </div>
-
+          <div className="grid gap-5">
             <div className="rounded-[28px] border border-white/70 bg-white/62 p-5 shadow-[0_18px_60px_rgba(88,73,37,0.08)] backdrop-blur sm:p-6">
               <p className="text-sm uppercase tracking-[0.24em] text-moss">Tag depth</p>
               <h3 className="mt-2 text-3xl font-semibold text-bark">
