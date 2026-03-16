@@ -16,6 +16,8 @@ export function LoginForm({ ownerEmail }: LoginFormProps) {
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const matchesOwnerEmail = (value?: string | null) =>
+    Boolean(value && ownerEmail && value.toLowerCase() === ownerEmail.toLowerCase());
 
   const submitLabel = mode === "sign-in" ? "Sign in" : "Create owner account";
 
@@ -46,6 +48,19 @@ export function LoginForm({ ownerEmail }: LoginFormProps) {
 
       if (error) {
         setMessage(error.message);
+        return;
+      }
+
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!matchesOwnerEmail(user?.email)) {
+        setMessage(
+          user?.email
+            ? `Signed in as ${user.email}, but this account is not matching the configured owner email yet.`
+            : "Sign-in succeeded, but I could not confirm the owner account from the session.",
+        );
         return;
       }
 
