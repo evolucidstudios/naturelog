@@ -1,5 +1,6 @@
 "use client";
 
+import exifr from "exifr";
 import Link from "next/link";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
@@ -199,6 +200,21 @@ async function compressImageForAnalysis(file: File) {
   }
 }
 
+async function extractGpsFromFile(file: File) {
+  try {
+    const gps = await exifr.gps(file);
+    return {
+      latitude: typeof gps?.latitude === "number" ? gps.latitude : null,
+      longitude: typeof gps?.longitude === "number" ? gps.longitude : null,
+    };
+  } catch {
+    return {
+      latitude: null,
+      longitude: null,
+    };
+  }
+}
+
 export function AdminEntryEditor({
   mode,
   initialEntry = createEmptyAdminDraft(),
@@ -258,10 +274,16 @@ export function AdminEntryEditor({
     startAnalysisTransition(async () => {
       try {
         const analysisFile = await compressImageForAnalysis(selectedFiles[0]);
+        const gps = await extractGpsFromFile(selectedFiles[0]);
         const formData = new FormData();
         formData.append("image", analysisFile);
-        formData.append("originalImage", selectedFiles[0]);
         formData.append("modelTier", modelTier);
+        if (gps.latitude !== null) {
+          formData.append("latitude", String(gps.latitude));
+        }
+        if (gps.longitude !== null) {
+          formData.append("longitude", String(gps.longitude));
+        }
 
         const response = await fetch("/api/ai/analyze", {
           method: "POST",

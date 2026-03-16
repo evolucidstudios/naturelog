@@ -45,9 +45,10 @@ export async function POST(request: Request) {
 
     const formData = await request.formData();
     const image = formData.get("image");
-    const originalImage = formData.get("originalImage");
     const modelTier = analysisModelSchema.parse(formData.get("modelTier") ?? "fast");
     const model = modelTier === "strong" ? "gpt-4.1" : "gpt-4.1-mini";
+    const latitude = formData.get("latitude");
+    const longitude = formData.get("longitude");
 
     if (!(image instanceof File)) {
       return NextResponse.json({ error: "No image file received." }, { status: 400 });
@@ -55,9 +56,7 @@ export async function POST(request: Request) {
 
     const bytes = Buffer.from(await image.arrayBuffer());
     const dataUrl = `data:${image.type};base64,${bytes.toString("base64")}`;
-    const exifSource =
-      originalImage instanceof File ? Buffer.from(await originalImage.arrayBuffer()) : bytes;
-    const exif = await exifr.parse(exifSource, { gps: true }).catch(() => null);
+    const exif = await exifr.parse(bytes, { gps: true }).catch(() => null);
 
     const client = new OpenAI({
       apiKey: openAiApiKey,
@@ -99,7 +98,15 @@ export async function POST(request: Request) {
       );
     }
 
-    if (typeof exif?.latitude === "number" && typeof exif?.longitude === "number") {
+    const parsedLatitude =
+      typeof latitude === "string" && latitude.length > 0 ? Number(latitude) : null;
+    const parsedLongitude =
+      typeof longitude === "string" && longitude.length > 0 ? Number(longitude) : null;
+
+    if (typeof parsedLatitude === "number" && typeof parsedLongitude === "number") {
+      analysis.location.latitude = parsedLatitude;
+      analysis.location.longitude = parsedLongitude;
+    } else if (typeof exif?.latitude === "number" && typeof exif?.longitude === "number") {
       analysis.location.latitude = exif.latitude;
       analysis.location.longitude = exif.longitude;
     }
