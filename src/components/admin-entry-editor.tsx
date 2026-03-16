@@ -192,6 +192,7 @@ export function AdminEntryEditor({
         const analysisFile = await compressImageForAnalysis(selectedFiles[0]);
         const formData = new FormData();
         formData.append("image", analysisFile);
+        formData.append("originalImage", selectedFiles[0]);
 
         const response = await fetch("/api/ai/analyze", {
           method: "POST",

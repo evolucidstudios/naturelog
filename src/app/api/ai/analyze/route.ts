@@ -43,6 +43,7 @@ export async function POST(request: Request) {
 
     const formData = await request.formData();
     const image = formData.get("image");
+    const originalImage = formData.get("originalImage");
 
     if (!(image instanceof File)) {
       return NextResponse.json({ error: "No image file received." }, { status: 400 });
@@ -50,7 +51,9 @@ export async function POST(request: Request) {
 
     const bytes = Buffer.from(await image.arrayBuffer());
     const dataUrl = `data:${image.type};base64,${bytes.toString("base64")}`;
-    const exif = await exifr.parse(bytes, { gps: true }).catch(() => null);
+    const exifSource =
+      originalImage instanceof File ? Buffer.from(await originalImage.arrayBuffer()) : bytes;
+    const exif = await exifr.parse(exifSource, { gps: true }).catch(() => null);
 
     const client = new OpenAI({
       apiKey: openAiApiKey,
