@@ -549,6 +549,7 @@ export function RolodexStack({
               </button>
               <TagChipLink
                 tag={accentTag}
+                label={`${accentTag} (${collectionTagCounts[accentTag] ?? visibleEntries.length})`}
                 className="min-h-[3.75rem] px-5 text-sm sm:min-h-[3.4rem] sm:px-4"
               />
               <button

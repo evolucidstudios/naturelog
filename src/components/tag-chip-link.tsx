@@ -4,6 +4,7 @@ type TagChipLinkProps = {
   tag: string;
   variant?: "light" | "dark" | "soft";
   className?: string;
+  label?: string;
 };
 
 const variantClassMap = {
@@ -16,13 +17,14 @@ export function TagChipLink({
   tag,
   variant = "light",
   className,
+  label,
 }: TagChipLinkProps) {
   return (
     <Link
       href={`/tag/${tag}`}
       className={[variantClassMap[variant], className].filter(Boolean).join(" ")}
     >
-      {tag}
+      {label ?? tag}
     </Link>
   );
 }

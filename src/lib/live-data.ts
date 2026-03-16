@@ -56,6 +56,7 @@ function rowToNatureEntry(row: EntryRow): NatureEntry {
 
   return {
     id: row.id,
+    createdAt: row.created_at,
     commonName: row.common_name,
     scientificName: row.scientific_name ?? "",
     note: row.note ?? "",

@@ -1,5 +1,6 @@
 export type NatureEntry = {
   id: string;
+  createdAt?: string;
   commonName: string;
   scientificName: string;
   note: string;

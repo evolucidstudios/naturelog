@@ -1,7 +1,8 @@
 import Link from "next/link";
+import { AdminEntriesList } from "@/components/admin-entries-list";
 import { AdminSessionControls } from "@/components/admin-session-controls";
 import { requireOwner } from "@/lib/auth";
-import { getAdminEntries, getSuggestedDeckHref } from "@/lib/live-data";
+import { getAdminEntries } from "@/lib/live-data";
 
 export default async function AdminPage() {
   const user = await requireOwner();
@@ -31,40 +32,7 @@ export default async function AdminPage() {
             </div>
           </div>
         </header>
-
-        <section className="grid gap-4">
-          {entries.map((entry) => (
-            <div
-              key={entry.id}
-              className="rounded-[26px] border border-white/70 bg-white/70 p-5 shadow-[0_16px_50px_rgba(88,73,37,0.08)] backdrop-blur"
-            >
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                <div>
-                  <p className="text-lg font-semibold text-bark">{entry.commonName}</p>
-                  <p className="mt-1 text-sm italic text-ink/56">{entry.scientificName}</p>
-                  <p className="mt-3 text-sm leading-6 text-ink/68">{entry.location.place}</p>
-                  <p className="mt-2 text-sm text-ink/56">{entry.tags.slice(0, 6).join(", ")}</p>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <Link
-                    href={`/admin/entries/${entry.id}`}
-                    className="rounded-full border border-bark/10 bg-paper px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-bark"
-                  >
-                    Edit
-                  </Link>
-                  <Link
-                    href={getSuggestedDeckHref(entry)}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="rounded-full border border-bark/10 bg-paper px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-bark"
-                  >
-                    View
-                  </Link>
-                </div>
-              </div>
-            </div>
-          ))}
-        </section>
+        <AdminEntriesList entries={entries} />
       </div>
     </main>
   );
