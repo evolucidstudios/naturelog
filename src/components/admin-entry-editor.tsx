@@ -202,7 +202,7 @@ async function compressImageForAnalysis(file: File) {
 
 async function extractGpsFromFile(file: File) {
   try {
-    const gps = await exifr.gps(file);
+    const gps = await exifr.parse(file, { gps: true });
     return {
       latitude: typeof gps?.latitude === "number" ? gps.latitude : null,
       longitude: typeof gps?.longitude === "number" ? gps.longitude : null,
