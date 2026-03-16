@@ -13,6 +13,7 @@ const analysisSchema = z.object({
   category: z.string().default(""),
   note: z.string().default(""),
   tags: z.array(z.string()).default([]),
+  lifespan: z.string().default(""),
   edible: z.enum(["edible", "not-edible", "unknown"]).default("unknown"),
   edibleNote: z.string().default(""),
   uses: z.array(z.string()).default([]),
@@ -63,7 +64,7 @@ export async function POST(request: Request) {
           {
             type: "input_text",
             text:
-              "Analyze this nature photo and return only JSON. Identify the likely subject, write a rich collectible-card description, and generate a strong field card for a long-term nature archive focused on foraging and discovery. Include useful tags, edible status, a safety-minded edible note, good uses, possible dish or tea ideas when relevant, fun facts, and simple care/location notes when relevant. If this is an animal, bird, fish, or insect, mark edible as not-edible unless you are highly certain the card should be for foraging. Never invent dangerous claims with high confidence. Use empty strings or empty arrays when unsure. JSON keys must be: commonName, scientificName, category, note, tags, edible, edibleNote, uses, culinaryIdeas, goodFor, funFacts, care { water, light, season }, location { place, latitude, longitude }, confidence.",
+              "Analyze this nature photo and return only JSON. Identify the likely subject, write a rich collectible-card description, and generate a strong field card for a long-term nature archive focused on foraging and discovery. Include useful tags, average lifespan when it is reasonably knowable, edible status, a safety-minded edible note, good uses, possible dish or tea ideas when relevant, fun facts, and simple care/location notes when relevant. If this is an animal, bird, fish, or insect, mark edible as not-edible unless you are highly certain the card should be for foraging. Never invent dangerous claims with high confidence. Use empty strings or empty arrays when unsure. JSON keys must be: commonName, scientificName, category, note, tags, lifespan, edible, edibleNote, uses, culinaryIdeas, goodFor, funFacts, care { water, light, season }, location { place, latitude, longitude }, confidence.",
           },
           {
             type: "input_image",

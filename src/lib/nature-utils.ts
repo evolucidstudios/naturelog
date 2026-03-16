@@ -47,12 +47,15 @@ export function getTagUsageCountFromEntries(entries: NatureEntry[], tag: string)
   return entries.filter((entry) => entry.tags.includes(tag)).length;
 }
 
-export function getDiscoveryTagsForEntry(entries: NatureEntry[], activeEntry: NatureEntry) {
+export function getDiscoveryTagsForEntry(
+  entries: NatureEntry[],
+  activeEntry: NatureEntry,
+  excludeTag?: string,
+) {
   const counts = getTagCounts(entries);
-
-  return Array.from(new Set(entries.flatMap((entry) => entry.tags)))
-    .filter((tag) => !activeEntry.tags.includes(tag))
-    .sort((left, right) => {
+  const allTags = Array.from(new Set(entries.flatMap((entry) => entry.tags)));
+  const sortTags = (tags: string[]) =>
+    tags.sort((left, right) => {
       const popularityDelta = (counts[right] ?? 0) - (counts[left] ?? 0);
 
       if (popularityDelta !== 0) {
@@ -61,6 +64,13 @@ export function getDiscoveryTagsForEntry(entries: NatureEntry[], activeEntry: Na
 
       return left.localeCompare(right);
     });
+  const outsideTags = allTags.filter((tag) => !activeEntry.tags.includes(tag) && tag !== excludeTag);
+
+  if (outsideTags.length > 0) {
+    return sortTags(outsideTags);
+  }
+
+  return sortTags(allTags.filter((tag) => tag !== excludeTag));
 }
 
 export function getPrimaryTagForEntryFromEntries(entry: NatureEntry, entries: NatureEntry[]) {

@@ -15,6 +15,7 @@ type AnalyzeResult = {
   category: string;
   note: string;
   tags: string[];
+  lifespan: string;
   edible: "edible" | "not-edible" | "unknown";
   edibleNote: string;
   uses: string[];
@@ -155,6 +156,7 @@ export function AdminEntryEditor({
         category: analysis.category || current.category,
         note: analysis.note || current.note,
         tags: analysis.tags.length > 0 ? analysis.tags : current.tags,
+        lifespan: analysis.lifespan || current.lifespan,
         edible: analysis.edible,
         edibleNote: analysis.edibleNote || current.edibleNote,
         uses: analysis.uses.length > 0 ? analysis.uses : current.uses,
@@ -245,14 +247,16 @@ export function AdminEntryEditor({
           </h1>
         </div>
         <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={handleAnalyze}
-            disabled={analysisPending}
-            className="rounded-full border border-bark/10 bg-sand/40 px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-bark transition-transform duration-200 hover:-translate-y-0.5 disabled:opacity-60"
-          >
-            {analysisPending ? "Analyzing..." : "Analyze with AI"}
-          </button>
+          {mode === "create" ? (
+            <button
+              type="button"
+              onClick={handleAnalyze}
+              disabled={analysisPending}
+              className="rounded-full border border-bark/10 bg-sand/40 px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-bark transition-transform duration-200 hover:-translate-y-0.5 disabled:opacity-60"
+            >
+              {analysisPending ? "Analyzing..." : "Analyze with AI"}
+            </button>
+          ) : null}
           <button
             type="button"
             onClick={handleSave}
@@ -279,6 +283,36 @@ export function AdminEntryEditor({
           {message}
         </div>
       ) : null}
+
+      <section className="rounded-[24px] border border-bark/10 bg-paper/70 p-4 shadow-[0_10px_30px_rgba(88,73,37,0.05)] sm:p-5">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-bark/56">
+              Choose pictures first
+            </p>
+          <p className="mt-2 text-sm leading-6 text-ink/68">
+            This is the first thing you’ll usually do. The first image powers AI analysis,
+            and the full set gets saved to the card.
+          </p>
+          {mode === "edit" ? (
+            <p className="mt-2 text-sm leading-6 text-ink/62">
+              Adding more photos to an existing card will not rerun AI analysis. It will just
+              attach the new images when you save.
+            </p>
+          ) : null}
+        </div>
+          <label className="inline-flex cursor-pointer items-center justify-center rounded-full bg-bark px-4 py-3 text-xs font-semibold uppercase tracking-[0.16em] text-paper transition-transform duration-200 hover:-translate-y-0.5">
+            Choose pictures
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={(event) => setSelectedFiles(Array.from(event.target.files ?? []))}
+              className="sr-only"
+            />
+          </label>
+        </div>
+      </section>
 
       <div className="grid gap-5 lg:grid-cols-2">
         <label className="block">
@@ -308,6 +342,17 @@ export function AdminEntryEditor({
           <input
             value={draft.category}
             onChange={(event) => updateDraft({ category: event.target.value })}
+            className="mt-2 w-full rounded-[18px] border border-bark/10 bg-paper px-4 py-3 text-base text-bark outline-none"
+          />
+        </label>
+        <label className="block">
+          <span className="text-xs font-semibold uppercase tracking-[0.18em] text-bark/56">
+            Average lifespan
+          </span>
+          <input
+            value={draft.lifespan}
+            onChange={(event) => updateDraft({ lifespan: event.target.value })}
+            placeholder="Example: 15 years in the wild"
             className="mt-2 w-full rounded-[18px] border border-bark/10 bg-paper px-4 py-3 text-base text-bark outline-none"
           />
         </label>
@@ -420,7 +465,7 @@ export function AdminEntryEditor({
         </label>
       </div>
 
-      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         <label className="block">
           <span className="text-xs font-semibold uppercase tracking-[0.18em] text-bark/56">
             Location place
@@ -472,22 +517,6 @@ export function AdminEntryEditor({
             }
             className="mt-2 w-full rounded-[18px] border border-bark/10 bg-paper px-4 py-3 text-base text-bark outline-none"
           />
-        </label>
-        <label className="block">
-          <span className="text-xs font-semibold uppercase tracking-[0.18em] text-bark/56">
-            Photos
-          </span>
-          <input
-            type="file"
-            accept="image/*"
-            multiple
-            onChange={(event) => setSelectedFiles(Array.from(event.target.files ?? []))}
-            className="mt-2 block w-full text-sm text-bark/72"
-          />
-          <p className="mt-2 text-xs leading-5 text-ink/56">
-            Upload one or more photos. The first one is used for AI analysis and becomes the
-            lead image unless you reorder later.
-          </p>
         </label>
       </div>
 

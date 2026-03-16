@@ -16,6 +16,7 @@ type EntryRow = {
   note: string | null;
   category: string | null;
   deck_slugs: string[] | null;
+  lifespan: string | null;
   edible: "edible" | "not-edible" | "unknown" | null;
   edible_note: string | null;
   uses: string[] | null;
@@ -62,6 +63,7 @@ function rowToNatureEntry(row: EntryRow): NatureEntry {
     tags,
     deckSlugs: row.deck_slugs ?? [],
     images,
+    lifespan: row.lifespan ?? undefined,
     location: {
       place: row.location_place ?? "",
       latitude: row.latitude ?? 0,
@@ -98,6 +100,7 @@ async function fetchEntries(includePrivate = false) {
         note,
         category,
         deck_slugs,
+        lifespan,
         edible,
         edible_note,
         uses,
@@ -179,6 +182,7 @@ export async function getAdminEntryDraft(id: string): Promise<AdminEntryDraft | 
       note: sample.note,
       tags: sample.tags,
       deckSlugs: sample.deckSlugs,
+      lifespan: sample.lifespan ?? "",
       edible: sample.edible ?? "unknown",
       edibleNote: sample.edibleNote ?? "",
       uses: sample.uses ?? [],
@@ -214,6 +218,7 @@ export async function getAdminEntryDraft(id: string): Promise<AdminEntryDraft | 
         note,
         category,
         deck_slugs,
+        lifespan,
         edible,
         edible_note,
         uses,
@@ -258,6 +263,7 @@ export async function getAdminEntryDraft(id: string): Promise<AdminEntryDraft | 
       .map((item) => item.tags?.slug)
       .filter((tag): tag is string => Boolean(tag)),
     deckSlugs: row.deck_slugs ?? [],
+    lifespan: row.lifespan ?? "",
     edible: row.edible ?? "unknown",
     edibleNote: row.edible_note ?? "",
     uses: row.uses ?? [],

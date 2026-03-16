@@ -6,6 +6,7 @@ export type AdminEntryDraft = {
   note: string;
   tags: string[];
   deckSlugs: string[];
+  lifespan: string;
   edible: "edible" | "not-edible" | "unknown";
   edibleNote: string;
   uses: string[];
@@ -44,6 +45,7 @@ export function createEmptyAdminDraft(): AdminEntryDraft {
     note: "",
     tags: [],
     deckSlugs: [],
+    lifespan: "",
     edible: "unknown",
     edibleNote: "",
     uses: [],
@@ -74,6 +76,7 @@ export function buildEntryPayloadFromDraft(draft: AdminEntryDraft, imagePaths: s
     note: draft.note.trim(),
     tags: draft.tags.map((tag) => slugify(tag)).filter(Boolean),
     deckSlugs: draft.deckSlugs.map((slug) => slugify(slug)).filter(Boolean),
+    lifespan: draft.lifespan.trim(),
     edible: draft.edible,
     edibleNote: draft.edibleNote.trim(),
     uses: draft.uses.map((item) => item.trim()).filter(Boolean),

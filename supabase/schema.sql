@@ -8,6 +8,7 @@ create table if not exists public.entries (
   note text not null default '',
   category text,
   deck_slugs text[] not null default '{}',
+  lifespan text,
   edible text not null default 'unknown' check (edible in ('edible', 'not-edible', 'unknown')),
   edible_note text,
   uses jsonb not null default '[]'::jsonb,

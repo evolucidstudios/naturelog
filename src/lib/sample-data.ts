@@ -7,6 +7,7 @@ export type NatureEntry = {
   tags: string[];
   deckSlugs: string[];
   images: string[];
+  lifespan?: string;
   location: {
     place: string;
     latitude: number;

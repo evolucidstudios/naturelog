@@ -51,18 +51,6 @@ function imageSkin(index: number) {
   return skins[index % skins.length];
 }
 
-function imageFill(image: string) {
-  if (image.startsWith("http")) {
-    return {
-      backgroundImage: `linear-gradient(180deg, rgba(8, 10, 9, 0.08), rgba(8, 10, 9, 0.34)), url("${image}")`,
-      backgroundSize: "cover",
-      backgroundPosition: "center",
-    } as const;
-  }
-
-  return undefined;
-}
-
 const DiscoverMoreCloudNoSSR = dynamic(
   () =>
     import("@/components/discover-more-cloud").then(
@@ -539,11 +527,11 @@ export function RolodexStack({
                 type="button"
                 onClick={jumpToRandomTag}
                 aria-label={`Jump to a random tag deck from ${accentTag}`}
-                className="group inline-flex h-[4.9rem] w-[4.9rem] items-center justify-center rounded-full border border-bark/12 bg-white/78 text-bark shadow-[0_12px_30px_rgba(57,51,38,0.1)] backdrop-blur transition-all duration-200 hover:-translate-y-0.5 hover:bg-white active:scale-95 sm:h-[4.4rem] sm:w-[4.4rem]"
+                className="group inline-flex h-[3.75rem] w-[3.75rem] items-center justify-center rounded-full border border-bark/12 bg-white/78 text-bark shadow-[0_12px_30px_rgba(57,51,38,0.1)] backdrop-blur transition-all duration-200 hover:-translate-y-0.5 hover:bg-white active:scale-95 sm:h-[3.4rem] sm:w-[3.4rem]"
               >
                 <svg
                   viewBox="0 0 48 48"
-                  className="h-7 w-7 transition-transform duration-500 group-hover:rotate-180 sm:h-6 sm:w-6"
+                  className="h-5 w-5 transition-transform duration-500 group-hover:rotate-180 sm:h-5 sm:w-5"
                   aria-hidden="true"
                   fill="none"
                   stroke="currentColor"
@@ -564,11 +552,11 @@ export function RolodexStack({
                 type="button"
                 onClick={() => setSearchOpen((current) => !current)}
                 aria-label="Search tags and categories"
-                className="group inline-flex h-[4.9rem] w-[4.9rem] items-center justify-center rounded-full border border-bark/12 bg-white/78 text-bark shadow-[0_12px_30px_rgba(57,51,38,0.1)] backdrop-blur transition-all duration-200 hover:-translate-y-0.5 hover:bg-white active:scale-95 sm:h-[4.4rem] sm:w-[4.4rem]"
+                className="group inline-flex h-[3.75rem] w-[3.75rem] items-center justify-center rounded-full border border-bark/12 bg-white/78 text-bark shadow-[0_12px_30px_rgba(57,51,38,0.1)] backdrop-blur transition-all duration-200 hover:-translate-y-0.5 hover:bg-white active:scale-95 sm:h-[3.4rem] sm:w-[3.4rem]"
               >
                 <svg
                   viewBox="0 0 24 24"
-                  className="h-7 w-7 sm:h-6 sm:w-6"
+                  className="h-5 w-5 sm:h-5 sm:w-5"
                   fill="none"
                   stroke="currentColor"
                   strokeWidth="2.2"
@@ -670,11 +658,19 @@ export function RolodexStack({
                     onTouchEnd={offset === 0 ? handleTouchEnd : undefined}
                     className={`relative block w-full overflow-hidden rounded-[28px] border border-white/10 bg-gradient-to-br ${imageSkin(imageIndex)} p-5 text-left sm:p-6`}
                     style={{
-                      ...imageFill(imageName),
                       touchAction: "pan-y pinch-zoom",
                     }}
                     aria-label={`${entry.commonName} card`}
                   >
+                    {imageName?.startsWith("http") ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={imageName}
+                        alt={entry.commonName}
+                        className="absolute inset-0 h-full w-full object-cover"
+                        draggable={false}
+                      />
+                    ) : null}
                     <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.24),transparent_24%),linear-gradient(180deg,rgba(255,255,255,0.04),rgba(0,0,0,0.2))]" />
                     <div className="absolute inset-x-0 bottom-0 h-44 bg-[linear-gradient(180deg,transparent,rgba(0,0,0,0.58))]" />
                     <div className="relative flex min-h-[30rem] flex-col justify-between sm:min-h-[34rem]">
@@ -885,6 +881,17 @@ export function RolodexStack({
           </div>
         </Link>
 
+        <div className="rounded-[30px] border border-white/70 bg-white/66 p-5 shadow-[0_18px_60px_rgba(88,73,37,0.08)] backdrop-blur sm:p-6">
+          <p className="text-xs font-bold uppercase tracking-[0.24em] text-moss/70">
+            Average lifespan
+          </p>
+          <div className="mt-5 rounded-[20px] border border-bark/5 bg-white/50 px-5 py-4 shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)]">
+            <p className="text-base font-semibold text-bark">
+              {activeEntry.lifespan || "Add lifespan during AI analysis or edit it manually."}
+            </p>
+          </div>
+        </div>
+
         {/* EDIBLE STATUS */}
         <div className="rounded-[30px] border border-white/70 bg-white/66 p-5 shadow-[0_18px_60px_rgba(88,73,37,0.08)] backdrop-blur sm:p-6">
           <p className="text-xs font-bold uppercase tracking-[0.24em] text-moss/70">
@@ -1074,7 +1081,7 @@ export function RolodexStack({
         {/* RANDOM TAGS / DISCOVERY */}
         <DiscoverMoreCloudNoSSR
           key={activeEntry.id}
-          tags={getDiscoveryTagsForEntry(allCollectionEntries, activeEntry)}
+          tags={getDiscoveryTagsForEntry(allCollectionEntries, activeEntry, accentTag)}
           tagCounts={collectionTagCounts}
         />
       </section>
