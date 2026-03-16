@@ -66,6 +66,60 @@ function createUploadId() {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
+async function compressImageForAnalysis(file: File) {
+  if (!file.type.startsWith("image/")) {
+    return file;
+  }
+
+  const imageUrl = URL.createObjectURL(file);
+
+  try {
+    const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const nextImage = new Image();
+      nextImage.onload = () => resolve(nextImage);
+      nextImage.onerror = () => reject(new Error("Could not prepare this image for AI analysis."));
+      nextImage.src = imageUrl;
+    });
+
+    const maxDimension = 1600;
+    const longestSide = Math.max(image.naturalWidth, image.naturalHeight);
+
+    if (longestSide <= maxDimension && file.size <= 4 * 1024 * 1024) {
+      return file;
+    }
+
+    const scale = Math.min(1, maxDimension / longestSide);
+    const width = Math.max(1, Math.round(image.naturalWidth * scale));
+    const height = Math.max(1, Math.round(image.naturalHeight * scale));
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+
+    const context = canvas.getContext("2d");
+    if (!context) {
+      return file;
+    }
+
+    context.drawImage(image, 0, 0, width, height);
+
+    const compressedBlob = await new Promise<Blob | null>((resolve) => {
+      canvas.toBlob(resolve, "image/jpeg", 0.82);
+    });
+
+    if (!compressedBlob) {
+      return file;
+    }
+
+    const baseName = file.name.replace(/\.[^.]+$/, "") || "analysis-image";
+    return new File([compressedBlob], `${baseName}.jpg`, {
+      type: "image/jpeg",
+      lastModified: Date.now(),
+    });
+  } finally {
+    URL.revokeObjectURL(imageUrl);
+  }
+}
+
 export function AdminEntryEditor({
   mode,
   initialEntry = createEmptyAdminDraft(),
@@ -135,8 +189,9 @@ export function AdminEntryEditor({
     setMessage(null);
     startAnalysisTransition(async () => {
       try {
+        const analysisFile = await compressImageForAnalysis(selectedFiles[0]);
         const formData = new FormData();
-        formData.append("image", selectedFiles[0]);
+        formData.append("image", analysisFile);
 
         const response = await fetch("/api/ai/analyze", {
           method: "POST",
