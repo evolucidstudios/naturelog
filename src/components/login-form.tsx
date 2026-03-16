@@ -53,6 +53,30 @@ export function LoginForm({ ownerEmail }: LoginFormProps) {
     });
   };
 
+  const handleResetPassword = () => {
+    if (!email) {
+      setMessage("Enter your owner email first so I know where to send the reset link.");
+      return;
+    }
+
+    setMessage(null);
+    startTransition(async () => {
+      const redirectTo =
+        typeof window === "undefined"
+          ? undefined
+          : `${window.location.origin}/reset-password`;
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo,
+      });
+
+      setMessage(
+        error
+          ? error.message
+          : "Password reset email sent. Open that link on this device to choose a new password.",
+      );
+    });
+  };
+
   return (
     <div className="mx-auto w-full max-w-md rounded-[28px] border border-white/70 bg-white/74 p-6 shadow-[0_18px_60px_rgba(88,73,37,0.08)] backdrop-blur">
       <p className="text-[11px] uppercase tracking-[0.28em] text-moss">Owner access</p>
@@ -103,6 +127,17 @@ export function LoginForm({ ownerEmail }: LoginFormProps) {
         >
           {pending ? "Working..." : submitLabel}
         </button>
+
+        {mode === "sign-in" ? (
+          <button
+            type="button"
+            onClick={handleResetPassword}
+            disabled={pending}
+            className="w-full rounded-[18px] border border-bark/10 bg-paper px-4 py-3 text-sm font-semibold uppercase tracking-[0.18em] text-bark transition-transform duration-200 hover:-translate-y-0.5 disabled:opacity-60"
+          >
+            Forgot password?
+          </button>
+        ) : null}
       </form>
 
       <div className="mt-5 flex items-center justify-between gap-3 text-sm text-ink/62">
