@@ -33,6 +33,8 @@ const analysisSchema = z.object({
   confidence: z.number().nullable().default(null),
 });
 
+const analysisModelSchema = z.enum(["fast", "strong"]).default("fast");
+
 export async function POST(request: Request) {
   try {
     await requireOwner();
@@ -44,6 +46,8 @@ export async function POST(request: Request) {
     const formData = await request.formData();
     const image = formData.get("image");
     const originalImage = formData.get("originalImage");
+    const modelTier = analysisModelSchema.parse(formData.get("modelTier") ?? "fast");
+    const model = modelTier === "strong" ? "gpt-4.1" : "gpt-4.1-mini";
 
     if (!(image instanceof File)) {
       return NextResponse.json({ error: "No image file received." }, { status: 400 });
@@ -60,7 +64,7 @@ export async function POST(request: Request) {
     });
 
     const response = await client.responses.parse({
-      model: "gpt-4.1-mini",
+      model,
       input: [
         {
           role: "user",
@@ -102,14 +106,14 @@ export async function POST(request: Request) {
 
     const admin = createSupabaseAdminClient();
     await admin.from("ai_runs").insert({
-      model: "gpt-4.1-mini",
+      model,
       source_filename: image.name,
       source_mime: image.type,
       confidence: analysis.confidence,
       result: analysis,
     });
 
-    return NextResponse.json({ analysis });
+    return NextResponse.json({ analysis, model });
   } catch (error) {
     return NextResponse.json(
       {

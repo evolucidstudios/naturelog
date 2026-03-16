@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
@@ -35,9 +36,32 @@ type AnalyzeResult = {
   confidence: number | null;
 };
 
+type AnalyzeResponse = {
+  analysis?: AnalyzeResult;
+  error?: string;
+  model?: string;
+};
+
 type AdminEntryEditorProps = {
   mode: "create" | "edit";
   initialEntry?: AdminEntryDraft;
+  knownEntries?: Array<{
+    id: string;
+    commonName: string;
+    scientificName: string;
+    category: string;
+    tags: string[];
+  }>;
+};
+
+type DuplicateMatch = {
+  id: string;
+  commonName: string;
+  scientificName: string;
+  category: string;
+  tags: string[];
+  score: number;
+  reasons: string[];
 };
 
 function splitLines(value: string) {
@@ -64,6 +88,61 @@ function createUploadId() {
   }
 
   return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+function normalizeValue(value: string) {
+  return value.toLowerCase().trim().replace(/\s+/g, " ");
+}
+
+function scoreDuplicateCandidate(
+  draft: AdminEntryDraft,
+  candidate: NonNullable<AdminEntryEditorProps["knownEntries"]>[number],
+) {
+  const reasons: string[] = [];
+  let score = 0;
+  const draftCommon = normalizeValue(draft.commonName);
+  const draftScientific = normalizeValue(draft.scientificName);
+  const draftCategory = normalizeValue(draft.category);
+  const candidateCommon = normalizeValue(candidate.commonName);
+  const candidateScientific = normalizeValue(candidate.scientificName);
+  const candidateCategory = normalizeValue(candidate.category);
+
+  if (draftCommon && candidateCommon && draftCommon === candidateCommon) {
+    score += 5;
+    reasons.push("same common name");
+  }
+
+  if (draftScientific && candidateScientific && draftScientific === candidateScientific) {
+    score += 6;
+    reasons.push("same scientific name");
+  }
+
+  if (draftCategory && candidateCategory && draftCategory === candidateCategory) {
+    score += 1;
+    reasons.push("same category");
+  }
+
+  const draftTags = new Set(draft.tags.map(normalizeValue).filter(Boolean));
+  const sharedTags = candidate.tags
+    .map(normalizeValue)
+    .filter((tag) => draftTags.has(tag));
+
+  if (sharedTags.length > 0) {
+    score += Math.min(sharedTags.length, 3);
+    reasons.push(
+      `${sharedTags.length} shared tag${sharedTags.length === 1 ? "" : "s"}`,
+    );
+  }
+
+  if (score < 4) {
+    return null;
+  }
+
+  return {
+    ...candidate,
+    score,
+    reasons,
+  } satisfies DuplicateMatch;
 }
 
 async function compressImageForAnalysis(file: File) {
@@ -123,6 +202,7 @@ async function compressImageForAnalysis(file: File) {
 export function AdminEntryEditor({
   mode,
   initialEntry = createEmptyAdminDraft(),
+  knownEntries = [],
 }: AdminEntryEditorProps) {
   const router = useRouter();
   const supabase = createSupabaseBrowserClient();
@@ -142,6 +222,17 @@ export function AdminEntryEditor({
     () => selectedFiles.map((file) => ({ file, url: URL.createObjectURL(file) })),
     [selectedFiles],
   );
+  const duplicateMatches = useMemo(() => {
+    if (mode !== "create") {
+      return [];
+    }
+
+    return knownEntries
+      .map((candidate) => scoreDuplicateCandidate(draft, candidate))
+      .filter((match): match is DuplicateMatch => Boolean(match))
+      .sort((left, right) => right.score - left.score)
+      .slice(0, 3);
+  }, [draft, knownEntries, mode]);
 
   useEffect(
     () => () => {
@@ -157,30 +248,7 @@ export function AdminEntryEditor({
     }));
   };
 
-  const uploadFiles = async () => {
-    if (selectedFiles.length === 0) {
-      return [];
-    }
-
-    const uploadedPaths: string[] = [];
-
-    for (const file of selectedFiles) {
-      const path = `entries/${Date.now()}-${createUploadId()}-${safeFileName(file.name)}`;
-      const { error } = await supabase.storage.from("nature-images").upload(path, file, {
-        upsert: false,
-      });
-
-      if (error) {
-        throw new Error(error.message);
-      }
-
-      uploadedPaths.push(path);
-    }
-
-    return uploadedPaths;
-  };
-
-  const handleAnalyze = () => {
+  const runAnalysis = (modelTier: "fast" | "strong") => {
     if (selectedFiles.length === 0) {
       setMessage("Choose at least one image first so I have something to analyze.");
       return;
@@ -193,6 +261,7 @@ export function AdminEntryEditor({
         const formData = new FormData();
         formData.append("image", analysisFile);
         formData.append("originalImage", selectedFiles[0]);
+        formData.append("modelTier", modelTier);
 
         const response = await fetch("/api/ai/analyze", {
           method: "POST",
@@ -200,7 +269,7 @@ export function AdminEntryEditor({
         });
         const contentType = response.headers.get("content-type") ?? "";
         const payload = contentType.includes("application/json")
-          ? ((await response.json()) as { analysis?: AnalyzeResult; error?: string })
+          ? ((await response.json()) as AnalyzeResponse)
           : { error: `Analysis failed with ${response.status}.` };
 
         if (!response.ok || !payload.analysis) {
@@ -235,11 +304,36 @@ export function AdminEntryEditor({
             longitude: analysis.location.longitude ?? current.location.longitude,
           },
         }));
-        setMessage("AI analysis applied. Review anything that looks off before saving.");
+
+        const modelLabel = payload.model === "gpt-4.1" ? "stronger model" : "fast model";
+        setMessage(`AI analysis applied from the ${modelLabel}. Review anything that looks off before saving.`);
       } catch (error) {
         setMessage(error instanceof Error ? error.message : "Analysis failed.");
       }
     });
+  };
+
+  const uploadFiles = async () => {
+    if (selectedFiles.length === 0) {
+      return [];
+    }
+
+    const uploadedPaths: string[] = [];
+
+    for (const file of selectedFiles) {
+      const path = `entries/${Date.now()}-${createUploadId()}-${safeFileName(file.name)}`;
+      const { error } = await supabase.storage.from("nature-images").upload(path, file, {
+        upsert: false,
+      });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      uploadedPaths.push(path);
+    }
+
+    return uploadedPaths;
   };
 
   const handleSave = () => {
@@ -311,14 +405,24 @@ export function AdminEntryEditor({
         </div>
         <div className="flex flex-wrap gap-2">
           {mode === "create" ? (
-            <button
-              type="button"
-              onClick={handleAnalyze}
-              disabled={analysisPending}
-              className="rounded-full border border-bark/10 bg-sand/40 px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-bark transition-transform duration-200 hover:-translate-y-0.5 disabled:opacity-60"
-            >
-              {analysisPending ? "Analyzing..." : "Analyze with AI"}
-            </button>
+            <>
+              <button
+                type="button"
+                onClick={() => runAnalysis("fast")}
+                disabled={analysisPending}
+                className="rounded-full border border-bark/10 bg-sand/40 px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-bark transition-transform duration-200 hover:-translate-y-0.5 disabled:opacity-60"
+              >
+                {analysisPending ? "Analyzing..." : "Analyze with AI"}
+              </button>
+              <button
+                type="button"
+                onClick={() => runAnalysis("strong")}
+                disabled={analysisPending}
+                className="rounded-full border border-[#4e6c74]/14 bg-[#eef6f7] px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-[#2f535b] transition-transform duration-200 hover:-translate-y-0.5 disabled:opacity-60"
+              >
+                {analysisPending ? "Analyzing..." : "Retry with better model"}
+              </button>
+            </>
           ) : null}
           <button
             type="button"
@@ -345,6 +449,44 @@ export function AdminEntryEditor({
         <div className="rounded-[18px] border border-bark/10 bg-paper px-4 py-3 text-sm text-bark/76">
           {message}
         </div>
+      ) : null}
+
+      {duplicateMatches.length > 0 ? (
+        <section className="rounded-[24px] border border-[#caa56f]/28 bg-[linear-gradient(180deg,#fff9ef,#f8eedc)] p-4 shadow-[0_10px_30px_rgba(88,73,37,0.05)] sm:p-5">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#8b6b35]">
+            Possible duplicate
+          </p>
+          <p className="mt-2 text-sm leading-6 text-bark/74">
+            This new card looks a lot like something already in your collection. You can still
+            save a new one, but you may want to add photos to the existing card instead.
+          </p>
+          <div className="mt-4 grid gap-3">
+            {duplicateMatches.map((match) => (
+              <div
+                key={match.id}
+                className="rounded-[18px] border border-[#d7c29c]/45 bg-white/72 px-4 py-3"
+              >
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-base font-semibold text-bark">{match.commonName}</p>
+                    {match.scientificName ? (
+                      <p className="mt-1 text-sm italic text-bark/58">{match.scientificName}</p>
+                    ) : null}
+                    <p className="mt-2 text-xs uppercase tracking-[0.14em] text-bark/52">
+                      {match.reasons.join(" · ")}
+                    </p>
+                  </div>
+                  <Link
+                    href={`/admin/entries/${match.id}`}
+                    className="inline-flex items-center justify-center rounded-full border border-bark/10 bg-paper px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-bark transition-transform duration-200 hover:-translate-y-0.5"
+                  >
+                    Edit existing
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
       ) : null}
 
       <section className="rounded-[24px] border border-bark/10 bg-paper/70 p-4 shadow-[0_10px_30px_rgba(88,73,37,0.05)] sm:p-5">
