@@ -80,6 +80,10 @@ function safeFileName(name: string) {
   return name.replace(/[^a-zA-Z0-9._-]/g, "-").toLowerCase();
 }
 
+function getSelectedFileKey(file: File) {
+  return `${file.name}-${file.lastModified}-${file.size}`;
+}
+
 function createUploadId() {
   if (
     typeof globalThis.crypto !== "undefined" &&
@@ -229,15 +233,39 @@ export function AdminEntryEditor({
   const [message, setMessage] = useState<string | null>(null);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [removedPaths, setRemovedPaths] = useState<string[]>([]);
+  const [coverImageKey, setCoverImageKey] = useState<string | null>(
+    initialEntry.existingImages[0] ? `existing:${initialEntry.existingImages[0].path}` : null,
+  );
 
   const visibleExistingImages = useMemo(
     () => draft.existingImages.filter((image) => !removedPaths.includes(image.path)),
     [draft.existingImages, removedPaths],
   );
   const selectedFilePreviews = useMemo(
-    () => selectedFiles.map((file) => ({ file, url: URL.createObjectURL(file) })),
+    () =>
+      selectedFiles.map((file) => ({
+        file,
+        key: `new:${getSelectedFileKey(file)}`,
+        url: URL.createObjectURL(file),
+      })),
     [selectedFiles],
   );
+  const availableCoverKeys = useMemo(
+    () => [
+      ...visibleExistingImages.map((image) => `existing:${image.path}`),
+      ...selectedFilePreviews.map((preview) => preview.key),
+    ],
+    [selectedFilePreviews, visibleExistingImages],
+  );
+  const activeCoverImageKey = useMemo(() => {
+    if (availableCoverKeys.length === 0) {
+      return null;
+    }
+
+    return coverImageKey && availableCoverKeys.includes(coverImageKey)
+      ? coverImageKey
+      : availableCoverKeys[0];
+  }, [availableCoverKeys, coverImageKey]);
   const duplicateMatches = useMemo(() => {
     if (mode !== "create") {
       return [];
@@ -340,7 +368,7 @@ export function AdminEntryEditor({
       return [];
     }
 
-    const uploadedPaths: string[] = [];
+    const uploadedFiles: Array<{ key: string; path: string }> = [];
 
     for (const file of selectedFiles) {
       const path = `entries/${Date.now()}-${createUploadId()}-${safeFileName(file.name)}`;
@@ -352,10 +380,13 @@ export function AdminEntryEditor({
         throw new Error(error.message);
       }
 
-      uploadedPaths.push(path);
+      uploadedFiles.push({
+        key: `new:${getSelectedFileKey(file)}`,
+        path,
+      });
     }
 
-    return uploadedPaths;
+    return uploadedFiles;
   };
 
   const handleSave = () => {
@@ -363,12 +394,22 @@ export function AdminEntryEditor({
 
     startTransition(async () => {
       try {
-        const uploadedPaths = await uploadFiles();
+        const uploadedFiles = await uploadFiles();
         const imagePaths = [
-          ...visibleExistingImages.map((image) => image.path),
-          ...uploadedPaths,
+          ...visibleExistingImages.map((image) => ({
+            key: `existing:${image.path}`,
+            path: image.path,
+          })),
+          ...uploadedFiles,
         ];
-        const payload = buildEntryPayloadFromDraft(draft, imagePaths);
+        const orderedImagePaths =
+          activeCoverImageKey && imagePaths.some((image) => image.key === activeCoverImageKey)
+            ? [
+                ...imagePaths.filter((image) => image.key === activeCoverImageKey),
+                ...imagePaths.filter((image) => image.key !== activeCoverImageKey),
+              ].map((image) => image.path)
+            : imagePaths.map((image) => image.path);
+        const payload = buildEntryPayloadFromDraft(draft, orderedImagePaths);
         const response = await fetch("/api/admin/entries", {
           method: "POST",
           headers: {
@@ -534,7 +575,10 @@ export function AdminEntryEditor({
               type="file"
               accept="image/*"
               multiple
-              onChange={(event) => setSelectedFiles(Array.from(event.target.files ?? []))}
+              onChange={(event) => {
+                const nextFiles = Array.from(event.target.files ?? []);
+                setSelectedFiles(nextFiles);
+              }}
               className="sr-only"
             />
           </label>
@@ -793,13 +837,24 @@ export function AdminEntryEditor({
           </p>
           <div className="mt-3 flex flex-wrap gap-3">
             {selectedFilePreviews.map((preview) => (
-              <div key={`${preview.file.name}-${preview.file.lastModified}`} className="space-y-2">
+              <div key={preview.key} className="space-y-2">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={preview.url}
                   alt={preview.file.name}
                   className="h-28 w-24 rounded-[18px] object-cover"
                 />
+                <button
+                  type="button"
+                  onClick={() => setCoverImageKey(preview.key)}
+                  className={`w-full rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] ${
+                    activeCoverImageKey === preview.key
+                      ? "bg-bark text-paper"
+                      : "border border-bark/10 bg-paper text-bark"
+                  }`}
+                >
+                  {activeCoverImageKey === preview.key ? "Cover image" : "Set as cover"}
+                </button>
                 <p className="max-w-24 text-center text-[11px] leading-4 text-bark/66">
                   {preview.file.name}
                 </p>
@@ -823,6 +878,17 @@ export function AdminEntryEditor({
                   alt=""
                   className="h-28 w-24 rounded-[18px] object-cover"
                 />
+                <button
+                  type="button"
+                  onClick={() => setCoverImageKey(`existing:${image.path}`)}
+                  className={`w-full rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] ${
+                    activeCoverImageKey === `existing:${image.path}`
+                      ? "bg-bark text-paper"
+                      : "border border-bark/10 bg-paper text-bark"
+                  }`}
+                >
+                  {activeCoverImageKey === `existing:${image.path}` ? "Cover image" : "Set as cover"}
+                </button>
                 <button
                   type="button"
                   onClick={() => setRemovedPaths((current) => [...current, image.path])}
