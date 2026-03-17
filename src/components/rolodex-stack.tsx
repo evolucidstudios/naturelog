@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { SecretLoginLink } from "@/components/secret-login-link";
 import { LAST_DECK_STORAGE_KEY } from "@/lib/navigation";
 import { LAST_MAP_STORAGE_KEY } from "@/lib/navigation";
 import {
@@ -42,10 +43,10 @@ function wrapIndex(index: number, length: number) {
 
 function imageSkin(index: number) {
   const skins = [
-    "from-[#6f9473] via-[#4d6f69] to-[#2f3c3c]",
-    "from-[#d59f4d] via-[#a35d3d] to-[#553127]",
-    "from-[#748f5d] via-[#4e6a4a] to-[#2d4335]",
-    "from-[#4f7f8f] via-[#355463] to-[#223640]",
+    "from-[#0fa3b1] via-[#4c77a4] to-[#525174]",
+    "from-[#b5e2fa] via-[#6ca6c4] to-[#525174]",
+    "from-[#9f87af] via-[#6d6b9c] to-[#525174]",
+    "from-[#0fa3b1] via-[#5a8cb3] to-[#9f87af]",
   ];
 
   return skins[index % skins.length];
@@ -85,6 +86,7 @@ export function RolodexStack({
   const [phase, setPhase] = useState<MotionPhase>("idle");
   const [dragOffset, setDragOffset] = useState(0);
   const [imageIndexes, setImageIndexes] = useState<Record<string, number>>({});
+  const [coverTextHidden, setCoverTextHidden] = useState<Record<string, boolean>>({});
   const [galleryEntryId, setGalleryEntryId] = useState<string | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -456,15 +458,36 @@ export function RolodexStack({
     return null;
   }
 
+  const accentLabel = accentTag === "all" ? "all finds" : accentTag;
+  const accentCount =
+    accentTag === "all"
+      ? entries.length
+      : accentTag
+        ? collectionTagCounts[accentTag] ?? visibleEntries.length
+        : visibleEntries.length;
   const activeImageIndex = imageIndexes[activeEntry.id] ?? 0;
+  const activeCoverTextHidden = coverTextHidden[activeEntry.id] ?? false;
   const cycleImage = () => {
     if (phase !== "idle" || pointerDragging.current || pinchZooming.current) {
       return;
     }
 
+    if (activeImageIndex === 0 && !activeCoverTextHidden) {
+      setCoverTextHidden((current) => ({
+        ...current,
+        [activeEntry.id]: true,
+      }));
+      return;
+    }
+
+    const nextIndex = wrapIndex(activeImageIndex + 1, activeEntry.images.length);
     setImageIndexes((current) => ({
       ...current,
-      [activeEntry.id]: wrapIndex((current[activeEntry.id] ?? 0) + 1, activeEntry.images.length),
+      [activeEntry.id]: nextIndex,
+    }));
+    setCoverTextHidden((current) => ({
+      ...current,
+      [activeEntry.id]: nextIndex === 0 ? false : true,
     }));
   };
 
@@ -499,7 +522,9 @@ export function RolodexStack({
       return;
     }
 
-    const candidateTags = allCollectionTags.filter((tag) => tag !== accentTag);
+    const candidateTags = allCollectionTags.filter(
+      (tag) => tag !== accentTag && (collectionTagCounts[tag] ?? 0) >= 2,
+    );
 
     if (candidateTags.length === 0) {
       return;
@@ -523,15 +548,20 @@ export function RolodexStack({
         <div className="mb-4 flex flex-wrap items-center justify-center gap-2">
           {accentTag ? (
             <>
+              <SecretLoginLink
+                href="/"
+                label="Go home"
+                className="h-[3.4rem] w-[3.4rem]"
+              />
               <button
                 type="button"
                 onClick={jumpToRandomTag}
                 aria-label={`Jump to a random tag deck from ${accentTag}`}
-                className="group inline-flex h-[3.75rem] w-[3.75rem] items-center justify-center rounded-full border border-bark/12 bg-white/78 text-bark shadow-[0_12px_30px_rgba(57,51,38,0.1)] backdrop-blur transition-all duration-200 hover:-translate-y-0.5 hover:bg-white active:scale-95 sm:h-[3.4rem] sm:w-[3.4rem]"
+                className="group inline-flex h-[3.4rem] w-[3.4rem] items-center justify-center rounded-full border border-bark/12 bg-white/78 text-bark shadow-[0_12px_30px_rgba(57,51,38,0.1)] backdrop-blur transition-all duration-200 hover:-translate-y-0.5 hover:bg-white active:scale-95"
               >
                 <svg
                   viewBox="0 0 48 48"
-                  className="h-5 w-5 transition-transform duration-500 group-hover:rotate-180 sm:h-5 sm:w-5"
+                  className="h-5 w-5 transition-transform duration-500 group-hover:rotate-180"
                   aria-hidden="true"
                   fill="none"
                   stroke="currentColor"
@@ -549,18 +579,18 @@ export function RolodexStack({
               </button>
               <TagChipLink
                 tag={accentTag}
-                label={`${accentTag} (${collectionTagCounts[accentTag] ?? visibleEntries.length})`}
-                className="min-h-[3.75rem] px-5 text-sm sm:min-h-[3.4rem] sm:px-4"
+                label={`${accentLabel} (${accentCount})`}
+                className="min-h-[3.4rem] px-5 text-sm sm:px-4"
               />
               <button
                 type="button"
                 onClick={() => setSearchOpen((current) => !current)}
                 aria-label="Search tags and categories"
-                className="group inline-flex h-[3.75rem] w-[3.75rem] items-center justify-center rounded-full border border-bark/12 bg-white/78 text-bark shadow-[0_12px_30px_rgba(57,51,38,0.1)] backdrop-blur transition-all duration-200 hover:-translate-y-0.5 hover:bg-white active:scale-95 sm:h-[3.4rem] sm:w-[3.4rem]"
+                className="group inline-flex h-[3.4rem] w-[3.4rem] items-center justify-center rounded-full border border-bark/12 bg-white/78 text-bark shadow-[0_12px_30px_rgba(57,51,38,0.1)] backdrop-blur transition-all duration-200 hover:-translate-y-0.5 hover:bg-white active:scale-95"
               >
                 <svg
                   viewBox="0 0 24 24"
-                  className="h-5 w-5 sm:h-5 sm:w-5"
+                  className="h-5 w-5"
                   fill="none"
                   stroke="currentColor"
                   strokeWidth="2.2"
@@ -572,6 +602,7 @@ export function RolodexStack({
                   <path d="m16 16 4 4" />
                 </svg>
               </button>
+              <SecretLoginLink className="h-[3.4rem] w-[3.4rem]" />
             </>
           ) : null}
         </div>
@@ -678,16 +709,20 @@ export function RolodexStack({
                     <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.24),transparent_24%),linear-gradient(180deg,rgba(255,255,255,0.04),rgba(0,0,0,0.2))]" />
                     <div className="absolute inset-x-0 bottom-0 h-44 bg-[linear-gradient(180deg,transparent,rgba(0,0,0,0.58))]" />
                     <div className="relative flex min-h-[30rem] flex-col justify-between sm:min-h-[34rem]">
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="max-w-[15rem]">
-                          <p className="card-title-glow mt-3 text-4xl leading-none font-semibold sm:text-5xl">
-                            {entry.commonName}
-                          </p>
-                          <p className="card-subtitle-glow mt-3 text-sm italic text-paper/84 sm:text-base">
-                            {entry.scientificName}
-                          </p>
+                      {imageIndex === 0 && !(coverTextHidden[entry.id] ?? false) ? (
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="max-w-[15rem]">
+                            <p className="card-title-glow mt-3 text-4xl leading-none font-semibold sm:text-5xl">
+                              {entry.commonName}
+                            </p>
+                            <p className="card-subtitle-glow mt-3 text-sm italic text-paper/84 sm:text-base">
+                              {entry.scientificName}
+                            </p>
+                          </div>
                         </div>
-                      </div>
+                      ) : (
+                        <div />
+                      )}
 
                       <div className="flex justify-end">
                         <div className="rounded-full border border-white/12 bg-[rgba(18,22,19,0.3)] px-3 py-1.5 text-right backdrop-blur-sm">
@@ -834,9 +869,14 @@ export function RolodexStack({
       >
         {/* ABOUT SECTION */}
         <div className="rounded-[30px] border border-white/70 bg-white/66 p-5 shadow-[0_18px_60px_rgba(88,73,37,0.08)] backdrop-blur sm:p-6">
-          <p className="text-xs font-bold uppercase tracking-[0.24em] text-moss/70">
+          <Link
+            href={`/admin/entries/${activeEntry.id}`}
+            target="_blank"
+            rel="noreferrer"
+            className="text-xs font-bold uppercase tracking-[0.24em] text-moss/70 transition-colors duration-200 hover:text-bark"
+          >
             About this find
-          </p>
+          </Link>
           <div className="mt-2 flex items-start justify-between gap-4">
             <div>
               <h3 className="text-3xl font-semibold text-bark">{activeEntry.commonName}</h3>
@@ -858,7 +898,7 @@ export function RolodexStack({
         {/* LOCATION BOX WITH MAP VIBE */}
         <Link
           href={`/map?focus=${activeEntry.id}`}
-          className="group relative block overflow-hidden rounded-[30px] border border-[#5aa0a4]/30 bg-[#245258] p-5 text-paper shadow-[0_18px_60px_rgba(34,92,96,0.24)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_22px_70px_rgba(34,92,96,0.35)] sm:p-6"
+          className="group relative block overflow-hidden rounded-[30px] border border-[#0fa3b1]/22 bg-[#525174] p-5 text-paper shadow-[0_18px_60px_rgba(82,81,116,0.2)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_22px_70px_rgba(82,81,116,0.28)] sm:p-6"
         >
           <div
             className="pointer-events-none absolute inset-0 opacity-55 transition-transform duration-700 group-hover:scale-110"
@@ -868,12 +908,12 @@ export function RolodexStack({
               backgroundPosition: "center",
             }}
           />
-          <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(36,82,88,0.45),rgba(26,61,66,0.88))]" />
+          <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(15,163,177,0.26),rgba(82,81,116,0.78)_58%,rgba(159,135,175,0.62))]" />
 
           <div className="relative flex h-full flex-col justify-between items-start gap-6">
             <div className="w-full flex items-start justify-between">
               <div>
-                <p className="text-xs font-bold uppercase tracking-[0.24em] text-[#a1d2d5]">Location</p>
+                <p className="text-xs font-bold uppercase tracking-[0.24em] text-[#b5e2fa]">Location</p>
                 <p className="mt-2 text-3xl font-semibold text-white drop-shadow-md">{activeEntry.location.place}</p>
               </div>
               <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white backdrop-blur-md transition-transform duration-300 group-hover:rotate-12 group-hover:scale-110">
@@ -884,7 +924,7 @@ export function RolodexStack({
               </span>
             </div>
             <div className="inline-flex items-center gap-2 rounded-full bg-black/20 px-4 py-1.5 backdrop-blur-sm">
-              <span className="h-2 w-2 rounded-full bg-green-400 animate-pulse" />
+              <span className="h-2 w-2 rounded-full bg-[#7df0ff] animate-pulse" />
               <span className="text-xs font-medium text-white/90 tracking-wide">View on Map</span>
             </div>
           </div>
@@ -957,7 +997,7 @@ export function RolodexStack({
         </div>
 
         {/* TAG WEB (FIXED!) */}
-        <div className="rounded-[30px] border border-white/70 bg-white/66 p-5 shadow-[0_18px_60px_rgba(88,73,37,0.08)] backdrop-blur sm:p-6">
+        <div className="rounded-[30px] border border-white/70 bg-white/66 p-5 shadow-[0_18px_60px_rgba(88,73,37,0.08)] backdrop-blur sm:p-6 lg:col-span-2">
           <p className="text-xs font-bold uppercase tracking-[0.24em] text-moss/70">Categorization Tags</p>
           <div className="mt-5 flex flex-wrap items-center gap-2.5">
             {activeEntry.tags.map((tag) => {
@@ -1070,8 +1110,29 @@ export function RolodexStack({
           </div>
         </div>
 
-        {/* FUN FACTS */}
         <div className="rounded-[30px] border border-white/70 bg-white/66 p-5 shadow-[0_18px_60px_rgba(88,73,37,0.08)] backdrop-blur sm:p-6">
+          <Link
+            href={`/admin/entries/${activeEntry.id}`}
+            target="_blank"
+            rel="noreferrer"
+            className="text-xs font-bold uppercase tracking-[0.24em] text-moss/70 transition-colors duration-200 hover:text-bark"
+          >
+            Notes
+          </Link>
+          <div className="grid gap-3">
+            {(activeEntry.culinaryIdeas ?? []).map((note, index) => (
+              <div
+                key={`${activeEntry.id}-note-${index}`}
+                className="rounded-[22px] bg-[linear-gradient(145deg,rgba(181,226,250,0.38),rgba(255,255,255,0.88))] px-4 py-3 shadow-sm"
+              >
+                <p className="text-sm leading-6 text-ink/80">{note}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* FUN FACTS */}
+        <div className="rounded-[30px] border border-white/70 bg-white/66 p-5 shadow-[0_18px_60px_rgba(88,73,37,0.08)] backdrop-blur sm:p-6 lg:col-span-2">
           <p className="text-xs font-bold uppercase tracking-[0.24em] text-moss/70 mb-4">
             Fun facts
           </p>

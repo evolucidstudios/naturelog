@@ -37,7 +37,7 @@ export function AdminEntriesList({ entries }: AdminEntriesListProps) {
 
   return (
     <section className="grid gap-4">
-      <div className="flex flex-wrap items-center gap-2 rounded-[22px] border border-white/70 bg-white/70 px-4 py-3 shadow-[0_12px_36px_rgba(88,73,37,0.06)] backdrop-blur">
+      <div className="flex flex-wrap items-center gap-2 rounded-[22px] border border-white/70 bg-[linear-gradient(135deg,rgba(255,255,255,0.78),rgba(181,226,250,0.34),rgba(159,135,175,0.18))] px-4 py-3 shadow-[0_12px_36px_rgba(82,81,116,0.08)] backdrop-blur">
         <span className="text-[11px] font-semibold uppercase tracking-[0.22em] text-bark/50">
           Sort
         </span>
@@ -46,7 +46,7 @@ export function AdminEntriesList({ entries }: AdminEntriesListProps) {
           onClick={() => setSortBy("date")}
           className={`rounded-full px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] transition-transform duration-200 hover:-translate-y-0.5 ${
             sortBy === "date"
-              ? "bg-bark text-paper"
+              ? "bg-[linear-gradient(135deg,#0fa3b1,#525174)] text-paper"
               : "border border-bark/10 bg-paper text-bark"
           }`}
         >
@@ -57,7 +57,7 @@ export function AdminEntriesList({ entries }: AdminEntriesListProps) {
           onClick={() => setSortBy("name")}
           className={`rounded-full px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] transition-transform duration-200 hover:-translate-y-0.5 ${
             sortBy === "name"
-              ? "bg-bark text-paper"
+              ? "bg-[linear-gradient(135deg,#0fa3b1,#525174)] text-paper"
               : "border border-bark/10 bg-paper text-bark"
           }`}
         >
@@ -74,37 +74,46 @@ export function AdminEntriesList({ entries }: AdminEntriesListProps) {
         </button>
       </div>
 
-      {sortedEntries.map((entry) => (
-        <div
-          key={entry.id}
-          className="rounded-[26px] border border-white/70 bg-white/70 p-5 shadow-[0_16px_50px_rgba(88,73,37,0.08)] backdrop-blur"
-        >
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <p className="text-lg font-semibold text-bark">{entry.commonName}</p>
-              <p className="mt-1 text-sm italic text-ink/56">{entry.scientificName}</p>
-              <p className="mt-3 text-sm leading-6 text-ink/68">{entry.location.place}</p>
-              <p className="mt-2 text-sm text-ink/56">{entry.tags.slice(0, 6).join(", ")}</p>
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        {sortedEntries.map((entry) => (
+          <div
+            key={entry.id}
+            className="overflow-hidden rounded-[28px] border border-white/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.84),rgba(249,247,243,0.76))] shadow-[0_18px_46px_rgba(82,81,116,0.1)] backdrop-blur"
+          >
+            <div className="aspect-square overflow-hidden bg-[linear-gradient(135deg,#b5e2fa,#9f87af)]">
+              {entry.images[0] ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={entry.images[0]}
+                  alt={entry.commonName}
+                  className="h-full w-full object-cover"
+                />
+              ) : null}
             </div>
-            <div className="flex flex-wrap gap-2">
-              <Link
-                href={`/admin/entries/${entry.id}`}
-                className="rounded-full border border-bark/10 bg-paper px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-bark"
-              >
-                Edit
-              </Link>
-              <Link
-                href={getSuggestedDeckHref(entry)}
-                target="_blank"
-                rel="noreferrer"
-                className="rounded-full border border-bark/10 bg-paper px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-bark"
-              >
-                View
-              </Link>
+            <div className="space-y-3 p-4">
+              <p className="line-clamp-2 min-h-[3rem] text-base font-semibold text-bark">
+                {entry.commonName}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <Link
+                  href={`/admin/entries/${entry.id}`}
+                  className="rounded-full border border-bark/10 bg-paper px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-bark transition-transform duration-200 hover:-translate-y-0.5"
+                >
+                  Edit
+                </Link>
+                <Link
+                  href={getSuggestedDeckHref(entry)}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="rounded-full border border-bark/10 bg-paper px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-bark transition-transform duration-200 hover:-translate-y-0.5"
+                >
+                  View
+                </Link>
+              </div>
             </div>
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
     </section>
   );
 }

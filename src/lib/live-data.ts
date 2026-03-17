@@ -157,6 +157,10 @@ export async function getSiteEntryById(id: string) {
 
 export async function getSiteEntriesByTag(tag: string) {
   const entries = await getSiteEntries();
+  if (tag.toLowerCase() === "all") {
+    return entries;
+  }
+
   return entries.filter((entry) => entry.tags.includes(tag));
 }
 

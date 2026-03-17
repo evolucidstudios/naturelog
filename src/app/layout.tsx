@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
-import { FloatingMapButton } from "@/components/floating-map-button";
-import { PublicLoginLink } from "@/components/public-login-link";
+import { CopyrightBadge } from "@/components/copyright-badge";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -16,10 +15,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>
-        {children}
-        <FloatingMapButton />
-        <PublicLoginLink />
+      <body className="min-h-screen">
+        <div className="flex min-h-screen flex-col">
+          <div className="flex-1">{children}</div>
+          <CopyrightBadge />
+        </div>
       </body>
     </html>
   );

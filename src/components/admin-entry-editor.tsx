@@ -292,6 +292,9 @@ export function AdminEntryEditor({
       ...patch,
     }));
   };
+  const primaryTagHref = draft.tags[0]
+    ? `/tag/${encodeURIComponent(draft.tags[0])}${draft.id ? `?focus=${encodeURIComponent(draft.id)}` : ""}`
+    : null;
 
   const runAnalysis = (modelTier: "fast" | "strong") => {
     if (selectedFiles.length === 0) {
@@ -458,15 +461,26 @@ export function AdminEntryEditor({
   };
 
   return (
-    <div className="space-y-6 rounded-[30px] border border-white/70 bg-white/74 p-5 shadow-[0_18px_60px_rgba(88,73,37,0.08)] backdrop-blur sm:p-6">
+    <div className="space-y-6 rounded-[34px] border border-white/70 bg-[linear-gradient(180deg,rgba(249,247,243,0.92),rgba(255,255,255,0.72))] p-5 shadow-[0_22px_64px_rgba(82,81,116,0.12)] backdrop-blur sm:p-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-[11px] uppercase tracking-[0.28em] text-moss">
             {mode === "create" ? "New entry" : "Edit entry"}
           </p>
-          <h1 className="mt-2 text-3xl font-semibold text-bark">
-            {mode === "create" ? "Create a new nature card" : draft.commonName || "Edit card"}
-          </h1>
+          {mode === "edit" && primaryTagHref ? (
+            <Link
+              href={primaryTagHref}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-2 inline-block text-3xl font-semibold text-bark hover:text-moss"
+            >
+              {draft.commonName || "Edit card"}
+            </Link>
+          ) : (
+            <h1 className="mt-2 text-3xl font-semibold text-bark">
+              {mode === "create" ? "Create a new nature card" : draft.commonName || "Edit card"}
+            </h1>
+          )}
         </div>
         <div className="flex flex-wrap gap-2">
           {mode === "create" ? (
@@ -475,7 +489,7 @@ export function AdminEntryEditor({
                 type="button"
                 onClick={() => runAnalysis("fast")}
                 disabled={analysisPending}
-                className="rounded-full border border-bark/10 bg-sand/40 px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-bark transition-transform duration-200 hover:-translate-y-0.5 disabled:opacity-60"
+                className="rounded-full border border-[#0fa3b1]/16 bg-[#dff8fb] px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-[#22565f] transition-transform duration-200 hover:-translate-y-0.5 disabled:opacity-60"
               >
                 {analysisPending ? "Analyzing..." : "Analyze with AI"}
               </button>
@@ -483,7 +497,7 @@ export function AdminEntryEditor({
                 type="button"
                 onClick={() => runAnalysis("strong")}
                 disabled={analysisPending}
-                className="rounded-full border border-[#4e6c74]/14 bg-[#eef6f7] px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-[#2f535b] transition-transform duration-200 hover:-translate-y-0.5 disabled:opacity-60"
+                className="rounded-full border border-[#9f87af]/18 bg-[#f1ebf8] px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-[#525174] transition-transform duration-200 hover:-translate-y-0.5 disabled:opacity-60"
               >
                 {analysisPending ? "Analyzing..." : "Retry with better model"}
               </button>
@@ -493,7 +507,7 @@ export function AdminEntryEditor({
             type="button"
             onClick={handleSave}
             disabled={pending}
-            className="rounded-full bg-bark px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-paper transition-transform duration-200 hover:-translate-y-0.5 disabled:opacity-60"
+            className="rounded-full bg-[linear-gradient(135deg,#0fa3b1,#525174)] px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-paper transition-transform duration-200 hover:-translate-y-0.5 disabled:opacity-60"
           >
             {pending ? "Saving..." : "Save entry"}
           </button>
@@ -502,7 +516,7 @@ export function AdminEntryEditor({
               type="button"
               onClick={handleDelete}
               disabled={deletePending}
-              className="rounded-full border border-[#a45f54]/20 bg-[#fff1ee] px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-[#8a4339] transition-transform duration-200 hover:-translate-y-0.5 disabled:opacity-60"
+            className="rounded-full border border-[#9f87af]/20 bg-[#fbf6ff] px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-[#6d4f82] transition-transform duration-200 hover:-translate-y-0.5 disabled:opacity-60"
             >
               {deletePending ? "Deleting..." : "Delete entry"}
             </button>
@@ -511,7 +525,7 @@ export function AdminEntryEditor({
       </div>
 
       {message ? (
-        <div className="rounded-[18px] border border-bark/10 bg-paper px-4 py-3 text-sm text-bark/76">
+        <div className="rounded-[18px] border border-[#0fa3b1]/14 bg-[#f7feff] px-4 py-3 text-sm text-bark/76">
           {message}
         </div>
       ) : null}
@@ -554,24 +568,24 @@ export function AdminEntryEditor({
         </section>
       ) : null}
 
-      <section className="rounded-[24px] border border-bark/10 bg-paper/70 p-4 shadow-[0_10px_30px_rgba(88,73,37,0.05)] sm:p-5">
+      <section className="rounded-[24px] border border-[#0fa3b1]/14 bg-[linear-gradient(135deg,rgba(181,226,250,0.44),rgba(249,247,243,0.9))] p-4 shadow-[0_14px_36px_rgba(15,163,177,0.08)] sm:p-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-bark/56">
               Choose pictures first
             </p>
-          <p className="mt-2 text-sm leading-6 text-ink/68">
-            This is the first thing you’ll usually do. The first image powers AI analysis,
-            and the full set gets saved to the card.
-          </p>
-          {mode === "edit" ? (
-            <p className="mt-2 text-sm leading-6 text-ink/62">
-              Adding more photos to an existing card will not rerun AI analysis. It will just
-              attach the new images when you save.
+            <p className="mt-2 text-sm leading-6 text-ink/68">
+              This is the first thing you&apos;ll usually do. The first image powers AI analysis,
+              and the full set gets saved to the card.
             </p>
-          ) : null}
-        </div>
-          <label className="inline-flex cursor-pointer items-center justify-center rounded-full bg-bark px-4 py-3 text-xs font-semibold uppercase tracking-[0.16em] text-paper transition-transform duration-200 hover:-translate-y-0.5">
+            {mode === "edit" ? (
+              <p className="mt-2 text-sm leading-6 text-ink/62">
+                Adding more photos to an existing card will not rerun AI analysis. It will just
+                attach the new images when you save.
+              </p>
+            ) : null}
+          </div>
+          <label className="inline-flex cursor-pointer items-center justify-center rounded-full bg-[linear-gradient(135deg,#0fa3b1,#525174)] px-4 py-3 text-xs font-semibold uppercase tracking-[0.16em] text-paper transition-transform duration-200 hover:-translate-y-0.5">
             Choose pictures
             <input
               type="file"
@@ -658,6 +672,78 @@ export function AdminEntryEditor({
         </label>
       </div>
 
+      {selectedFilePreviews.length > 0 ? (
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-bark/56">
+            New uploads
+          </p>
+          <div className="mt-3 flex flex-wrap gap-3">
+            {selectedFilePreviews.map((preview) => (
+              <div key={preview.key} className="space-y-2">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={preview.url}
+                  alt={preview.file.name}
+                  className="h-28 w-24 rounded-[18px] object-cover shadow-[0_12px_30px_rgba(82,81,116,0.14)]"
+                />
+                <button
+                  type="button"
+                  onClick={() => setCoverImageKey(preview.key)}
+                  className={`w-full rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] ${
+                    activeCoverImageKey === preview.key
+                      ? "bg-[linear-gradient(135deg,#0fa3b1,#525174)] text-paper"
+                      : "border border-bark/10 bg-paper text-bark"
+                  }`}
+                >
+                  {activeCoverImageKey === preview.key ? "Cover image" : "Set as cover"}
+                </button>
+                <p className="max-w-24 text-center text-[11px] leading-4 text-bark/66">
+                  {preview.file.name}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      {visibleExistingImages.length > 0 ? (
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-bark/56">
+            Existing images
+          </p>
+          <div className="mt-3 flex flex-wrap gap-3">
+            {visibleExistingImages.map((image) => (
+              <div key={image.path} className="space-y-2">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={image.url}
+                  alt=""
+                  className="h-28 w-24 rounded-[18px] object-cover shadow-[0_12px_30px_rgba(82,81,116,0.14)]"
+                />
+                <button
+                  type="button"
+                  onClick={() => setCoverImageKey(`existing:${image.path}`)}
+                  className={`w-full rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] ${
+                    activeCoverImageKey === `existing:${image.path}`
+                      ? "bg-[linear-gradient(135deg,#0fa3b1,#525174)] text-paper"
+                      : "border border-bark/10 bg-paper text-bark"
+                  }`}
+                >
+                  {activeCoverImageKey === `existing:${image.path}` ? "Cover image" : "Set as cover"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRemovedPaths((current) => [...current, image.path])}
+                  className="w-full rounded-full border border-bark/10 bg-paper px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-bark"
+                >
+                  Remove
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
       <label className="block">
         <span className="text-xs font-semibold uppercase tracking-[0.18em] text-bark/56">
           Description
@@ -735,7 +821,7 @@ export function AdminEntryEditor({
         </label>
         <label className="block">
           <span className="text-xs font-semibold uppercase tracking-[0.18em] text-bark/56">
-            Culinary ideas
+            Notes
           </span>
           <textarea
             value={joinLines(draft.culinaryIdeas)}
@@ -743,7 +829,7 @@ export function AdminEntryEditor({
               updateDraft({ culinaryIdeas: splitLines(event.target.value) })
             }
             rows={4}
-            placeholder="One idea per line"
+            placeholder="One thought per line"
             className="mt-2 w-full rounded-[18px] border border-bark/10 bg-paper px-4 py-3 text-base text-bark outline-none"
           />
         </label>
@@ -843,77 +929,16 @@ export function AdminEntryEditor({
         </label>
       </div>
 
-      {selectedFilePreviews.length > 0 ? (
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-bark/56">
-            New uploads
-          </p>
-          <div className="mt-3 flex flex-wrap gap-3">
-            {selectedFilePreviews.map((preview) => (
-              <div key={preview.key} className="space-y-2">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={preview.url}
-                  alt={preview.file.name}
-                  className="h-28 w-24 rounded-[18px] object-cover"
-                />
-                <button
-                  type="button"
-                  onClick={() => setCoverImageKey(preview.key)}
-                  className={`w-full rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] ${
-                    activeCoverImageKey === preview.key
-                      ? "bg-bark text-paper"
-                      : "border border-bark/10 bg-paper text-bark"
-                  }`}
-                >
-                  {activeCoverImageKey === preview.key ? "Cover image" : "Set as cover"}
-                </button>
-                <p className="max-w-24 text-center text-[11px] leading-4 text-bark/66">
-                  {preview.file.name}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      ) : null}
-
-      {visibleExistingImages.length > 0 ? (
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-bark/56">
-            Existing images
-          </p>
-          <div className="mt-3 flex flex-wrap gap-3">
-            {visibleExistingImages.map((image) => (
-              <div key={image.path} className="space-y-2">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={image.url}
-                  alt=""
-                  className="h-28 w-24 rounded-[18px] object-cover"
-                />
-                <button
-                  type="button"
-                  onClick={() => setCoverImageKey(`existing:${image.path}`)}
-                  className={`w-full rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] ${
-                    activeCoverImageKey === `existing:${image.path}`
-                      ? "bg-bark text-paper"
-                      : "border border-bark/10 bg-paper text-bark"
-                  }`}
-                >
-                  {activeCoverImageKey === `existing:${image.path}` ? "Cover image" : "Set as cover"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setRemovedPaths((current) => [...current, image.path])}
-                  className="w-full rounded-full border border-bark/10 bg-paper px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-bark"
-                >
-                  Remove
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-      ) : null}
+      <div className="flex justify-end">
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={pending}
+          className="rounded-full bg-[linear-gradient(135deg,#0fa3b1,#525174)] px-5 py-3 text-xs font-semibold uppercase tracking-[0.16em] text-paper transition-transform duration-200 hover:-translate-y-0.5 disabled:opacity-60"
+        >
+          {pending ? "Saving..." : "Save entry"}
+        </button>
+      </div>
     </div>
   );
 }

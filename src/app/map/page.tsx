@@ -15,7 +15,7 @@ export default async function MapPage({ searchParams }: MapPageProps) {
   const mapRegions = buildMapRegionsFromEntries(entries);
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(155,201,175,0.45),transparent_24%),radial-gradient(circle_at_bottom_right,rgba(73,113,138,0.24),transparent_22%),linear-gradient(180deg,#e7efdc_0%,#efe4d0_44%,#eadbc7_100%)] px-4 py-5 text-ink sm:px-6 sm:py-6 lg:px-8">
+    <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(15,163,177,0.16),transparent_24%),radial-gradient(circle_at_bottom_right,rgba(159,135,175,0.18),transparent_24%),linear-gradient(180deg,#f9f7f3_0%,#edf8fc_42%,#eef0fa_100%)] px-4 py-5 text-ink sm:px-6 sm:py-6 lg:px-8">
       <div className="mx-auto flex max-w-7xl flex-col gap-6">
         <section>
           <MapExplorer

@@ -19,6 +19,33 @@ export function titleCase(value: string) {
   return value.replace(/[-_]/g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
+export function normalizeLocationPlace(value: string) {
+  const cleaned = value.trim().replace(/\s+/g, " ");
+
+  if (!cleaned) {
+    return "";
+  }
+
+  const aliases: Array<[RegExp, string]> = [
+    [/batiquitos/i, "Batiquitos Lagoon"],
+    [/agua\s+hedionda/i, "Agua Hedionda Lagoon"],
+    [/buena\s+vista\s+lagoon/i, "Buena Vista Lagoon"],
+    [/san\s+elijo/i, "San Elijo Lagoon"],
+  ];
+
+  for (const [pattern, canonical] of aliases) {
+    if (pattern.test(cleaned)) {
+      return canonical;
+    }
+  }
+
+  return cleaned
+    .replace(/\b(the)\b\s+/i, "")
+    .replace(/\b(trailhead|trail|loop trail|parking lot|overlook|nature preserve|ecological reserve|reserve|preserve)\b$/i, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 export function getTagCounts(entries: NatureEntry[]) {
   return entries.reduce<Record<string, number>>((counts, entry) => {
     for (const tag of entry.tags) {
@@ -99,7 +126,7 @@ export function buildMapRegionsFromEntries(entries: NatureEntry[]): MapRegion[] 
   const counts = new Map<string, number>();
 
   for (const entry of entries) {
-    const place = entry.location.place.trim();
+    const place = normalizeLocationPlace(entry.location.place);
 
     if (!place) {
       continue;
@@ -120,7 +147,7 @@ export function buildMapRegionsFromEntries(entries: NatureEntry[]): MapRegion[] 
 
 export function entryMatchesRegion(entry: NatureEntry, region: MapRegion) {
   return (
-    slugify(entry.location.place) === region.slug ||
+    slugify(normalizeLocationPlace(entry.location.place)) === region.slug ||
     (region.deckSlug ? entry.deckSlugs.includes(region.deckSlug) : false)
   );
 }

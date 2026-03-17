@@ -4,6 +4,7 @@ import OpenAI from "openai";
 import { zodTextFormat } from "openai/helpers/zod";
 import { z } from "zod";
 import { requireOwner } from "@/lib/auth";
+import { normalizeLocationPlace } from "@/lib/nature-utils";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
 import { isOpenAiConfigured, openAiApiKey } from "@/lib/supabase/env";
 
@@ -72,7 +73,7 @@ export async function POST(request: Request) {
             {
               type: "input_text",
               text:
-                "Analyze this nature photo and return only JSON. Identify the likely subject, write a rich collectible-card description, and generate a strong field card for a long-term nature archive focused on foraging and discovery. Include a simple pronunciation guide for the common name when useful, useful tags, average lifespan when it is reasonably knowable, edible status, a safety-minded edible note, good uses, possible dish or tea ideas when relevant, fun facts, and simple care/location notes when relevant. If this is an animal, bird, fish, or insect, mark edible as not-edible unless you are highly certain the card should be for foraging. Never invent dangerous claims with high confidence. Use empty strings or empty arrays when unsure. JSON keys must be: commonName, pronunciation, scientificName, category, note, tags, lifespan, edible, edibleNote, uses, culinaryIdeas, goodFor, funFacts, care { water, light, season }, location { place, latitude, longitude }, confidence.",
+                "Analyze this nature photo and return only JSON. Identify the likely subject, write a rich collectible-card description, and generate a strong field card for a long-term nature archive focused on foraging and discovery. Include a simple pronunciation guide for the common name when useful, useful tags, average lifespan when it is reasonably knowable, edible status, a safety-minded edible note, good uses, possible dish or tea ideas when relevant, fun facts, and simple care/location notes when relevant. For location.place, prefer a broad repeatable place name that should stay consistent across many visits, like 'Batiquitos Lagoon' instead of a hyper-specific phrase like 'Batiquitos Lagoon trail near the footbridge'. If this is an animal, bird, fish, or insect, mark edible as not-edible unless you are highly certain the card should be for foraging. Never invent dangerous claims with high confidence. Use empty strings or empty arrays when unsure. JSON keys must be: commonName, pronunciation, scientificName, category, note, tags, lifespan, edible, edibleNote, uses, culinaryIdeas, goodFor, funFacts, care { water, light, season }, location { place, latitude, longitude }, confidence.",
             },
             {
               type: "input_image",
@@ -111,6 +112,8 @@ export async function POST(request: Request) {
       analysis.location.latitude = exif.latitude;
       analysis.location.longitude = exif.longitude;
     }
+
+    analysis.location.place = normalizeLocationPlace(analysis.location.place);
 
     const admin = createSupabaseAdminClient();
     await admin.from("ai_runs").insert({

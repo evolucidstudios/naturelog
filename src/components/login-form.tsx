@@ -104,7 +104,7 @@ export function LoginForm({ ownerEmail }: LoginFormProps) {
   };
 
   return (
-    <div className="mx-auto w-full max-w-md rounded-[28px] border border-white/70 bg-white/74 p-6 shadow-[0_18px_60px_rgba(88,73,37,0.08)] backdrop-blur">
+    <div className="mx-auto w-full max-w-md rounded-[30px] border border-white/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.84),rgba(181,226,250,0.28))] p-6 shadow-[0_22px_64px_rgba(31,59,83,0.12)] backdrop-blur">
       <p className="text-[11px] uppercase tracking-[0.28em] text-moss">Owner access</p>
       <h1 className="mt-3 text-3xl font-semibold text-bark">Sign in to Nature Log</h1>
       <p className="mt-3 text-sm leading-6 text-ink/68">
@@ -141,7 +141,7 @@ export function LoginForm({ ownerEmail }: LoginFormProps) {
         </label>
 
         {message ? (
-          <div className="rounded-[18px] border border-bark/10 bg-sand/30 px-4 py-3 text-sm text-bark/72">
+          <div className="rounded-[18px] border border-[#0fa3b1]/14 bg-[#f0fcff] px-4 py-3 text-sm text-bark/72">
             {message}
           </div>
         ) : null}
@@ -149,7 +149,7 @@ export function LoginForm({ ownerEmail }: LoginFormProps) {
         <button
           type="submit"
           disabled={pending}
-          className="w-full rounded-[18px] bg-bark px-4 py-3 text-sm font-semibold uppercase tracking-[0.18em] text-paper transition-transform duration-200 hover:-translate-y-0.5 disabled:opacity-60"
+          className="w-full rounded-[18px] bg-[linear-gradient(135deg,#0fa3b1,#1f3b53)] px-4 py-3 text-sm font-semibold uppercase tracking-[0.18em] text-paper transition-transform duration-200 hover:-translate-y-0.5 disabled:opacity-60"
         >
           {pending ? "Working..." : submitLabel}
         </button>

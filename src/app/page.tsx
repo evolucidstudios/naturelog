@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { SecretLoginLink } from "@/components/secret-login-link";
 import { TagChipLink } from "@/components/tag-chip-link";
 import {
   getCollectionTags,
@@ -11,202 +12,192 @@ export const dynamic = "force-dynamic";
 
 export default async function Home() {
   const entries = await getSiteEntries();
-  const featuredEntry = entries[0];
-  const featuredDeckHref = getDeckHrefForEntryFromEntries(featuredEntry, entries);
+  const newestEntry = entries[0];
+  const newestDeckHref = newestEntry
+    ? getDeckHrefForEntryFromEntries(newestEntry, entries)
+    : "/tag/all";
+  const popularTags = getCollectionTags(entries).slice(0, 10);
+  const recentEntries = entries.slice(0, 12);
   const tagCounts = getTagCounts(entries);
-  const popularTags = getCollectionTags(entries).slice(0, 8);
   const quickStats = [
-    { label: "Cards logged", value: String(entries.length) },
-    { label: "Live tags", value: String(Object.keys(tagCounts).length) },
+    {
+      label: "Cards logged",
+      value: String(entries.length),
+      href: "/tag/all",
+    },
+    {
+      label: "Live tags",
+      value: String(Object.keys(tagCounts).length),
+      href: "/tags",
+    },
   ];
 
-  if (!featuredEntry) {
+  if (!newestEntry) {
     return (
-      <main className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(217,238,227,0.88),transparent_30%),linear-gradient(180deg,#f7f3ea_0%,#f1e8d8_38%,#eee2cf_100%)] px-4 py-10 text-ink sm:px-6">
-        <div className="mx-auto max-w-3xl rounded-[28px] border border-white/70 bg-white/70 p-6 text-center shadow-[0_18px_60px_rgba(88,73,37,0.08)] backdrop-blur">
-          <p className="text-[11px] uppercase tracking-[0.28em] text-moss">Nature Log</p>
-          <h1 className="mt-3 text-3xl font-semibold text-bark">Ready for your first find</h1>
-          <p className="mt-3 text-sm leading-7 text-ink/72">
-            Sign in as the owner to upload your first card and start building the collection.
-          </p>
-          <div className="mt-5 flex justify-center gap-3">
-            <Link className="chip" href="/login">
-              Login
-            </Link>
-            <Link className="chip" href="/map">
-              Explore map
-            </Link>
-          </div>
+      <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(15,163,177,0.22),transparent_24%),radial-gradient(circle_at_top_right,rgba(15,76,129,0.18),transparent_26%),linear-gradient(180deg,#f9f7f3_0%,#e6f7fd_42%,#d9eef9_100%)] px-4 py-6 text-ink sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-5xl">
+          <header className="rounded-[34px] border border-white/70 bg-white/72 px-5 py-5 shadow-[0_22px_64px_rgba(82,81,116,0.12)] backdrop-blur sm:px-6">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-2">
+                <Link href="/" className="text-[11px] font-semibold uppercase tracking-[0.34em] text-bark/82">
+                  Nature Log
+                </Link>
+                <SecretLoginLink className="h-10 w-10" />
+              </div>
+              <Link
+                href="/map"
+                className="rounded-full bg-[linear-gradient(135deg,#0fa3b1,#525174)] px-5 py-3 text-xs font-semibold uppercase tracking-[0.18em] text-paper shadow-[0_14px_30px_rgba(15,163,177,0.2)] transition-transform duration-200 hover:-translate-y-0.5"
+              >
+                Explore map
+              </Link>
+            </div>
+            <div className="mt-12 text-center">
+              <p className="text-[11px] uppercase tracking-[0.3em] text-moss/80">Field journal</p>
+              <h1 className="mt-4 text-5xl font-semibold text-bark sm:text-6xl">
+                Ready for the first wild thing worth keeping.
+              </h1>
+              <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-ink/72 sm:text-base">
+                The archive wakes up the moment your first card lands here.
+              </p>
+            </div>
+          </header>
         </div>
       </main>
     );
   }
 
-  const featuredImage = featuredEntry.images[0];
-  const featuredImageStyle = featuredImage
-    ? {
-        backgroundImage: `linear-gradient(180deg, rgba(8, 10, 9, 0.08), rgba(8, 10, 9, 0.42)), url("${featuredImage}")`,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-      }
-    : undefined;
-
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(217,238,227,0.88),transparent_30%),linear-gradient(180deg,#f7f3ea_0%,#f1e8d8_38%,#eee2cf_100%)] text-ink">
-      <section className="mx-auto flex w-full max-w-6xl flex-col px-4 py-5 sm:px-6 sm:py-6 lg:px-8">
-        <header className="rounded-[28px] border border-white/70 bg-white/64 px-5 py-6 shadow-[0_18px_65px_rgba(88,73,37,0.08)] backdrop-blur sm:px-6 sm:py-7">
-          <div className="mx-auto max-w-3xl text-center">
-            <p className="text-[11px] uppercase tracking-[0.34em] text-moss sm:text-xs">
-              Nature Log
-            </p>
-            <h1 className="mt-4 text-4xl leading-[0.95] font-semibold text-bark sm:text-5xl md:text-6xl">
-              Make the card the treasure.
-            </h1>
-            <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-ink/72 sm:text-base">
-              Upload a find, let AI help build the card, and keep every discovery feeling like
-              a collectible specimen in one growing archive.
-            </p>
+    <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(15,163,177,0.22),transparent_24%),radial-gradient(circle_at_top_right,rgba(15,76,129,0.18),transparent_26%),radial-gradient(circle_at_bottom_left,rgba(181,226,250,0.28),transparent_24%),linear-gradient(180deg,#f9f7f3_0%,#e6f7fd_42%,#d9eef9_100%)] px-4 py-5 text-ink sm:px-6 sm:py-6 lg:px-8">
+      <div className="mx-auto max-w-7xl">
+        <header className="overflow-hidden rounded-[36px] border border-white/70 bg-[linear-gradient(135deg,rgba(249,247,243,0.86),rgba(181,226,250,0.72)_38%,rgba(15,163,177,0.18)_76%,rgba(15,76,129,0.2)_100%)] px-5 py-5 shadow-[0_24px_70px_rgba(31,59,83,0.12)] backdrop-blur sm:px-6">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <Link href="/" className="text-[11px] font-semibold uppercase tracking-[0.34em] text-bark/82">
+                Nature Log
+              </Link>
+              <SecretLoginLink className="h-10 w-10" />
+            </div>
+            <div className="flex flex-wrap items-center justify-end gap-3">
+              {quickStats.map((stat) => (
+                <Link
+                  key={stat.label}
+                  href={stat.href}
+                  className="inline-flex h-[2.95rem] min-w-[5.9rem] flex-col items-center justify-center rounded-full border border-white/80 bg-[linear-gradient(135deg,rgba(255,255,255,0.82),rgba(181,226,250,0.5))] px-4 text-center shadow-[0_14px_34px_rgba(31,59,83,0.08)] backdrop-blur transition-transform duration-200 hover:-translate-y-1 hover:bg-white"
+                >
+                  <p className="text-[10px] uppercase tracking-[0.24em] text-bark/50">
+                    {stat.label === "Cards logged" ? "Cards" : "Tags"}
+                  </p>
+                  <p className="mt-0.5 text-base leading-none font-semibold text-bark">{stat.value}</p>
+                </Link>
+              ))}
+              <Link
+                href="/map"
+                className="inline-flex h-[2.95rem] items-center justify-center rounded-full bg-[linear-gradient(135deg,#0fa3b1,#525174)] px-5 text-xs font-semibold uppercase tracking-[0.18em] text-paper shadow-[0_14px_30px_rgba(15,163,177,0.2)] transition-transform duration-200 hover:-translate-y-0.5"
+              >
+                Explore map
+              </Link>
+            </div>
           </div>
 
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-2 sm:gap-3">
-            <Link className="chip" href={featuredDeckHref}>
-              Nature Deck
-            </Link>
-            <Link className="chip" href="/map">
-              Explore map
-            </Link>
-            <Link className="chip" href="/login">
-              Login
+          <div className="mt-10 grid gap-8 lg:grid-cols-[1.2fr_0.8fr] lg:items-end">
+            <div>
+              <p className="text-[11px] uppercase tracking-[0.3em] text-moss/80">Field archive</p>
+              <h1 className="mt-4 max-w-3xl text-5xl font-semibold text-bark sm:text-6xl">
+                It is nice to know what a wild thing is called.
+              </h1>
+              <p className="mt-5 max-w-2xl text-base leading-8 text-ink/74">
+                A name changes the way you see it. The shape stays the same, but suddenly it feels
+                familiar, memorable, and worth keeping.
+              </p>
+            </div>
+
+            <Link
+              href={newestDeckHref}
+              className="group mx-auto block w-full max-w-[22rem] overflow-hidden rounded-[30px] border border-white/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.86),rgba(181,226,250,0.24))] shadow-[0_22px_60px_rgba(31,59,83,0.12)] backdrop-blur transition-transform duration-300 hover:-translate-y-1"
+            >
+              <div className="aspect-square overflow-hidden bg-[linear-gradient(135deg,#0fa3b1,#0f4c81)]">
+                {newestEntry.images[0] ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={newestEntry.images[0]}
+                    alt={newestEntry.commonName}
+                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                ) : null}
+              </div>
+              <div className="space-y-2 p-5">
+                <p className="text-[10px] uppercase tracking-[0.24em] text-moss/80">
+                  Newest field note
+                </p>
+                <h2 className="text-2xl font-semibold text-bark">{newestEntry.commonName}</h2>
+                <p className="text-sm italic text-bark/58">{newestEntry.scientificName}</p>
+              </div>
             </Link>
           </div>
         </header>
 
-        <section className="relative mt-5 sm:mt-7">
-          <div className="absolute inset-x-0 top-12 mx-auto h-48 w-[90%] rounded-full bg-[radial-gradient(circle,rgba(95,127,87,0.22),transparent_70%)] blur-3xl sm:top-16 sm:h-56" />
-          <div className="relative mx-auto flex max-w-2xl flex-col items-center">
-            <div className="mb-4 flex flex-wrap items-center justify-center gap-2">
-              {quickStats.map((stat) => (
-                <div
-                  key={stat.label}
-                  className="rounded-full border border-white/70 bg-white/70 px-3 py-2 text-center shadow-[0_10px_30px_rgba(88,73,37,0.06)] backdrop-blur sm:px-4"
-                >
-                  <p className="text-[10px] uppercase tracking-[0.22em] text-ink/50">
-                    {stat.label}
-                  </p>
-                  <p className="mt-1 text-lg font-semibold text-bark">{stat.value}</p>
-                </div>
-              ))}
+        <section className="mt-8">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-[11px] uppercase tracking-[0.26em] text-moss/78">Recent finds</p>
+              <h2 className="mt-2 text-3xl font-semibold text-bark sm:text-4xl">
+                Recent finds
+              </h2>
             </div>
+          </div>
 
-            <Link
-              href={featuredDeckHref}
-              className="group block w-full max-w-[25rem] rounded-[34px] border border-white/80 bg-[linear-gradient(160deg,#6f9473_0%,#486768_54%,#2f3c3c_100%)] p-4 text-paper shadow-[0_28px_80px_rgba(52,60,48,0.24)] transition-transform duration-300 hover:-translate-y-1 sm:p-5"
-            >
-              <div
-                className="relative overflow-hidden rounded-[28px] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.24),transparent_26%),linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.02))] p-5 sm:p-6"
-                style={featuredImageStyle}
+          <div className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+            {recentEntries.map((entry) => (
+              <Link
+                key={entry.id}
+                href={getDeckHrefForEntryFromEntries(entry, entries)}
+                className="group relative overflow-hidden rounded-[28px] border border-white/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.86),rgba(181,226,250,0.16))] shadow-[0_18px_46px_rgba(31,59,83,0.1)] backdrop-blur transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_22px_58px_rgba(15,163,177,0.18)]"
               >
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.18),transparent_24%),linear-gradient(180deg,rgba(255,255,255,0.04),rgba(0,0,0,0.28))]" />
-                <div className="absolute right-4 top-4 h-16 w-16 rounded-full border border-white/12 bg-[radial-gradient(circle,rgba(255,255,255,0.24),rgba(255,255,255,0.02))] blur-[1px] sm:h-20 sm:w-20" />
-                <div className="relative flex min-h-[30rem] flex-col justify-between sm:min-h-[34rem]">
-                  <div>
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <p className="text-[11px] uppercase tracking-[0.32em] text-paper/68">
-                          Featured specimen
-                        </p>
-                        <h2 className="card-title-glow mt-4 max-w-xs text-4xl leading-none font-semibold sm:text-5xl">
-                          {featuredEntry.commonName}
-                        </h2>
-                        <p className="card-subtitle-glow mt-3 text-sm italic text-paper/84 sm:text-base">
-                          {featuredEntry.scientificName}
-                        </p>
-                      </div>
-                      <span className="rounded-full border border-white/12 bg-white/8 px-3 py-1 text-[10px] uppercase tracking-[0.22em] text-paper/76">
-                        Live card
-                      </span>
-                    </div>
-
-                    <div className="mt-8 rounded-[24px] border border-white/10 bg-white/8 p-4 backdrop-blur-sm">
-                      <p className="text-[11px] uppercase tracking-[0.24em] text-paper/62">
-                        Field note
-                      </p>
-                      <p className="mt-3 text-sm leading-7 text-paper/82 sm:text-[15px]">
-                        {featuredEntry.note}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="space-y-4">
-                    <div className="flex flex-wrap gap-2">
-                      {featuredEntry.tags.slice(0, 6).map((tag) => (
-                        <span
-                          key={tag}
-                          className="chip chip-soft pointer-events-none"
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-
-                    <div className="grid gap-3 rounded-[24px] border border-white/10 bg-bark/26 p-4 sm:grid-cols-2">
-                      <div>
-                        <p className="text-[11px] uppercase tracking-[0.24em] text-paper/56">
-                          Location
-                        </p>
-                        <p className="mt-2 text-base font-semibold">{featuredEntry.location.place}</p>
-                      </div>
-                      <div>
-                        <p className="text-[11px] uppercase tracking-[0.24em] text-paper/56">
-                          Images
-                        </p>
-                        <p className="mt-2 text-base font-semibold">
-                          {featuredEntry.images.length} views saved
-                        </p>
-                      </div>
-                    </div>
+                <div className="relative aspect-square overflow-hidden bg-[linear-gradient(135deg,#0fa3b1,#0f4c81)]">
+                  {entry.images[0] ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={entry.images[0]}
+                      alt={entry.commonName}
+                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
+                  ) : null}
+                  <div className="absolute inset-0 bg-[linear-gradient(180deg,transparent_38%,rgba(8,20,33,0.68)_100%)]" />
+                  <div className="absolute inset-x-0 bottom-0 p-4">
+                    <h3 className="card-title-glow line-clamp-2 text-lg font-semibold text-paper">
+                      {entry.commonName}
+                    </h3>
                   </div>
                 </div>
-              </div>
-            </Link>
+                <div className="p-4 pt-3">
+                  <p className="text-[10px] uppercase tracking-[0.2em] text-bark/46">
+                    {entry.location.place}
+                  </p>
+                </div>
+              </Link>
+            ))}
           </div>
         </section>
 
-        <section className="mt-8 space-y-5 sm:mt-10 sm:space-y-6">
-          <div className="rounded-[28px] border border-white/70 bg-white/62 p-5 shadow-[0_16px_55px_rgba(88,73,37,0.08)] backdrop-blur sm:p-6">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-              <div>
-                <p className="text-sm uppercase tracking-[0.24em] text-moss">Popular tags</p>
-                <h3 className="mt-2 text-3xl font-semibold text-bark">Open a stack</h3>
-              </div>
+        <section className="mt-8 rounded-[32px] border border-white/70 bg-[linear-gradient(135deg,rgba(255,255,255,0.8),rgba(181,226,250,0.44),rgba(15,163,177,0.08))] p-5 shadow-[0_20px_60px_rgba(31,59,83,0.1)] backdrop-blur sm:p-6">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-[11px] uppercase tracking-[0.26em] text-moss/78">Popular tags</p>
+              <h2 className="mt-2 text-3xl font-semibold text-bark">Follow a thread.</h2>
             </div>
-
-            <div className="mt-5 flex flex-wrap gap-3">
-              {popularTags.map((tag) => (
-                <TagChipLink key={tag} tag={tag} />
-              ))}
-            </div>
+            <p className="max-w-lg text-sm leading-7 text-ink/64">
+              Start with a mood, a species family, a season, or a place. The collection opens
+              differently depending on what you chase first.
+            </p>
           </div>
-          <div className="grid gap-5">
-            <div className="rounded-[28px] border border-white/70 bg-white/62 p-5 shadow-[0_18px_60px_rgba(88,73,37,0.08)] backdrop-blur sm:p-6">
-              <p className="text-sm uppercase tracking-[0.24em] text-moss">Tag depth</p>
-              <h3 className="mt-2 text-3xl font-semibold text-bark">
-                Deep categorization, ready for live uploads
-              </h3>
-              <p className="mt-3 max-w-2xl text-sm leading-7 text-ink/70">
-                The real workflow now has a place for owner login, file uploads, AI-generated
-                card text, and map metadata, so this collection can become your actual field
-                system instead of just a concept.
-              </p>
-              <div className="mt-5 flex flex-wrap gap-3">
-                {popularTags.slice(0, 6).map((tag) => (
-                  <TagChipLink key={tag} tag={tag} />
-                ))}
-              </div>
-            </div>
+
+          <div className="mt-5 flex flex-wrap gap-3">
+            {popularTags.map((tag) => (
+              <TagChipLink key={tag} tag={tag} />
+            ))}
           </div>
         </section>
-      </section>
+      </div>
     </main>
   );
 }

@@ -124,7 +124,21 @@ export function MapExplorer({
     () => getCollectionTags(entries),
     [entries],
   );
-  const featuredTags = useMemo(() => tagPool.slice(0, 6), [tagPool]);
+  const featuredRegions = useMemo(() => {
+    const rankedRegions = regions
+      .map((region) => ({
+        region,
+        count: entries.filter((entry) => entryMatchesRegion(entry, region)).length,
+      }))
+      .sort((left, right) => right.count - left.count || left.region.name.localeCompare(right.region.name));
+
+    const multiEntryRegions = rankedRegions.filter((item) => item.count >= 2);
+    const fallbackRegions = rankedRegions.filter((item) => item.count >= 1);
+
+    return (multiEntryRegions.length > 0 ? multiEntryRegions : fallbackRegions)
+      .slice(0, 4)
+      .map((item) => item.region);
+  }, [entries, regions]);
   const [randomMapTags, setRandomMapTags] = useState<string[]>(() =>
     tagPool.slice(0, Math.min(tagPool.length, 14)),
   );
@@ -168,6 +182,7 @@ export function MapExplorer({
 
     return entries;
   }, [activeFilter, entries, regions]);
+  const activeFilterCount = visibleEntries.length;
 
   const selectedEntry = useMemo(() => {
     if (selectedEntryId === null) {
@@ -351,8 +366,12 @@ export function MapExplorer({
 
   const focusRandomMapSlice = () => {
     const options = [
-      ...regions.map((region) => ({ type: "region" as const, value: region.slug })),
-      ...tagPool.map((tag) => ({ type: "tag" as const, value: tag })),
+      ...regions
+        .filter((region) => entries.filter((entry) => entryMatchesRegion(entry, region)).length >= 2)
+        .map((region) => ({ type: "region" as const, value: region.slug })),
+      ...tagPool
+        .filter((tag) => (tagCounts[tag] ?? 0) >= 2)
+        .map((tag) => ({ type: "tag" as const, value: tag })),
     ];
     const currentValue =
       activeFilter === "all" ? "all" : activeFilter.replace("region:", "").replace("tag:", "");
@@ -405,40 +424,50 @@ export function MapExplorer({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-3 rounded-[24px] border border-white/70 bg-white/72 px-4 py-3 shadow-[0_18px_60px_rgba(88,73,37,0.08)] backdrop-blur sm:px-5">
-        <button
-          type="button"
-          onClick={focusRandomMapSlice}
-          aria-label="Randomize map focus"
-          className="group inline-flex h-[3.75rem] w-[3.75rem] shrink-0 items-center justify-center rounded-full border border-bark/12 bg-white/78 text-bark shadow-[0_12px_30px_rgba(57,51,38,0.1)] backdrop-blur transition-all duration-200 hover:-translate-y-0.5 hover:bg-white active:scale-95 sm:h-[3.4rem] sm:w-[3.4rem]"
-        >
-          <svg
-            viewBox="0 0 48 48"
-            className="h-5 w-5 transition-transform duration-500 group-hover:rotate-180 sm:h-5 sm:w-5"
-            aria-hidden="true"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="4"
-            strokeLinecap="round"
-            strokeLinejoin="round"
+        <div className="flex items-center gap-2">
+          <Link
+            href="/"
+            aria-label="Go home"
+            className="group inline-flex h-[3.4rem] w-[3.4rem] shrink-0 items-center justify-center rounded-full border border-transparent bg-transparent text-transparent shadow-none transition-all duration-200 hover:border-bark/10 hover:bg-white/34 active:scale-95 active:bg-white/58"
           >
-            <path d="M40 11v10H30" />
-            <path d="M8 37V27h10" />
-            <path d="M38.6 21a16 16 0 0 0-27-6L8 19" />
-            <path d="M9.4 27a16 16 0 0 0 27 6L40 29" />
-          </svg>
-        </button>
+            <span className="sr-only">Go home</span>
+            <span className="h-2 w-2 rounded-full bg-bark/0 transition-colors duration-200 group-hover:bg-bark/12 group-active:bg-bark/22" />
+          </Link>
+          <button
+            type="button"
+            onClick={focusRandomMapSlice}
+            aria-label="Randomize map focus"
+            className="group inline-flex h-[3.4rem] w-[3.4rem] shrink-0 items-center justify-center rounded-full border border-bark/12 bg-white/78 text-bark shadow-[0_12px_30px_rgba(57,51,38,0.1)] backdrop-blur transition-all duration-200 hover:-translate-y-0.5 hover:bg-white active:scale-95"
+          >
+            <svg
+              viewBox="0 0 48 48"
+              className="h-5 w-5 transition-transform duration-500 group-hover:rotate-180"
+              aria-hidden="true"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="4"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M40 11v10H30" />
+              <path d="M8 37V27h10" />
+              <path d="M38.6 21a16 16 0 0 0-27-6L8 19" />
+              <path d="M9.4 27a16 16 0 0 0 27 6L40 29" />
+            </svg>
+          </button>
+        </div>
         <div className="min-w-0 flex-1 rounded-full border border-bark/10 bg-paper px-3 py-1.5 text-center text-xs font-semibold uppercase tracking-[0.16em] text-bark">
-          {activeFilterLabel}
+          {activeFilterLabel} ({activeFilterCount})
         </div>
         <button
           type="button"
           onClick={() => setSearchOpen((current) => !current)}
           aria-label="Search map tags and categories"
-          className="group inline-flex h-[3.75rem] w-[3.75rem] shrink-0 items-center justify-center rounded-full border border-bark/12 bg-white/78 text-bark shadow-[0_12px_30px_rgba(57,51,38,0.1)] backdrop-blur transition-all duration-200 hover:-translate-y-0.5 hover:bg-white active:scale-95 sm:h-[3.4rem] sm:w-[3.4rem]"
+          className="group inline-flex h-[3.4rem] w-[3.4rem] shrink-0 items-center justify-center rounded-full border border-bark/12 bg-white/78 text-bark shadow-[0_12px_30px_rgba(57,51,38,0.1)] backdrop-blur transition-all duration-200 hover:-translate-y-0.5 hover:bg-white active:scale-95"
         >
           <svg
             viewBox="0 0 24 24"
-            className="h-5 w-5 sm:h-5 sm:w-5"
+            className="h-5 w-5"
             fill="none"
             stroke="currentColor"
             strokeWidth="2.2"
@@ -501,7 +530,7 @@ export function MapExplorer({
         </div>
       ) : null}
 
-      <div className="relative overflow-hidden rounded-[34px] border border-bark/10 bg-[linear-gradient(145deg,#e0ecd6,#bfd4c3)] shadow-[0_18px_60px_rgba(88,73,37,0.08)]">
+      <div className="relative overflow-hidden rounded-[34px] border border-bark/10 bg-[linear-gradient(145deg,#dff8fb,#d9def8)] shadow-[0_18px_60px_rgba(82,81,116,0.12)]">
         <Map
           ref={mapRef}
           mapboxAccessToken={mapboxToken}
@@ -557,15 +586,10 @@ export function MapExplorer({
               className="naturelog-popup"
             >
               <div className="min-w-[186px] space-y-2 p-0.5">
-                <div>
-                  <p className="text-xs uppercase tracking-[0.18em] text-moss">
-                    {selectedEntry.location.place}
-                  </p>
-                  <p className="mt-1 text-lg font-semibold leading-tight text-bark">
-                    {selectedEntry.commonName}
-                  </p>
-                </div>
-                <div className="relative h-24 overflow-hidden rounded-[16px] border border-bark/10 bg-sand/30">
+                <p className="text-lg font-semibold leading-tight text-bark">
+                  {selectedEntry.commonName}
+                </p>
+                <div className="relative h-32 overflow-hidden rounded-[16px] border border-bark/10 bg-sand/30">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={selectedEntry.images[0]}
@@ -578,15 +602,43 @@ export function MapExplorer({
                   <button
                     type="button"
                     onClick={() => fitEntries([selectedEntry], 13.6)}
-                    className="rounded-[14px] border border-bark/10 bg-sand/40 px-3 py-1.5 text-xs font-semibold tracking-[0.16em] text-bark transition-transform duration-200 hover:-translate-y-0.5"
+                    className="inline-flex items-center justify-center rounded-[14px] border border-bark/10 bg-sand/40 px-3 py-2 text-bark transition-transform duration-200 hover:-translate-y-0.5"
+                    aria-label={`Center on ${selectedEntry.commonName}`}
                   >
-                    CENTER
+                    <svg
+                      viewBox="0 0 24 24"
+                      className="h-4 w-4"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden="true"
+                    >
+                      <circle cx="12" cy="12" r="7" />
+                      <path d="M12 2v4" />
+                      <path d="M12 18v4" />
+                      <path d="m15 9-3 3-2 4 4-2 3-3-2-2Z" />
+                    </svg>
                   </button>
                   <Link
                     href={getDeckHrefForEntryFromEntries(selectedEntry, entries)}
-                    className="rounded-[14px] border border-bark/10 bg-bark px-3 py-1.5 text-center text-xs font-semibold tracking-[0.16em] text-paper transition-transform duration-200 hover:-translate-y-0.5"
+                    className="inline-flex items-center justify-center rounded-[14px] border border-bark/10 bg-bark px-3 py-2 text-paper transition-transform duration-200 hover:-translate-y-0.5"
+                    aria-label={`Open ${selectedEntry.commonName}`}
                   >
-                    OPEN
+                    <svg
+                      viewBox="0 0 24 24"
+                      className="h-4 w-4"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden="true"
+                    >
+                      <path d="M5 12h14" />
+                      <path d="m13 5 7 7-7 7" />
+                    </svg>
                   </Link>
                 </div>
               </div>
@@ -596,7 +648,7 @@ export function MapExplorer({
       </div>
 
       <div>
-        <div className="rounded-[28px] border border-white/70 bg-white/74 p-4 shadow-[0_18px_60px_rgba(88,73,37,0.08)] backdrop-blur sm:p-5">
+        <div className="rounded-[28px] border border-white/70 bg-white/74 p-4 shadow-[0_18px_60px_rgba(82,81,116,0.1)] backdrop-blur sm:p-5">
           <div className="flex items-center justify-between gap-3">
             <div>
               <p className="text-[10px] uppercase tracking-[0.22em] text-moss">
@@ -620,7 +672,7 @@ export function MapExplorer({
           </div>
 
           <div className="mt-4 flex flex-wrap gap-2">
-            {regions.map((region) => (
+            {featuredRegions.map((region) => (
               <button
                 key={region.slug}
                 type="button"
@@ -632,23 +684,6 @@ export function MapExplorer({
                 }`}
               >
                 {region.name}
-              </button>
-            ))}
-          </div>
-
-          <div className="mt-4 flex flex-wrap gap-2">
-            {featuredTags.map((tag) => (
-              <button
-                key={tag}
-                type="button"
-                onClick={() => focusTag(tag)}
-                className={`rounded-full px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] transition-transform duration-200 hover:-translate-y-0.5 ${
-                  activeFilter === `tag:${tag}`
-                    ? "bg-moss text-paper"
-                    : "border border-bark/10 bg-paper/90 text-bark"
-                }`}
-              >
-                {tag}
               </button>
             ))}
           </div>
