@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AdminEntriesList } from "@/components/admin-entries-list";
+import { AdminPronunciationBackfillButton } from "@/components/admin-pronunciation-backfill-button";
 import { AdminSessionControls } from "@/components/admin-session-controls";
 import { requireOwner } from "@/lib/auth";
 import { getAdminEntries } from "@/lib/live-data";
@@ -28,6 +29,7 @@ export default async function AdminPage() {
               >
                 New entry
               </Link>
+              <AdminPronunciationBackfillButton />
               <AdminSessionControls />
             </div>
           </div>
