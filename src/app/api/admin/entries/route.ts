@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requireOwner } from "@/lib/auth";
-import { normalizeLocationPlace } from "@/lib/nature-utils";
+import { formatLocationLabel, normalizeLocationPlace } from "@/lib/nature-utils";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
 
 const entryPayloadSchema = z.object({
@@ -66,7 +66,7 @@ export async function POST(request: Request) {
     care_water: payload.care.water,
     care_light: payload.care.light,
     care_season: payload.care.season,
-    location_place: normalizeLocationPlace(payload.location.place),
+    location_place: formatLocationLabel(normalizeLocationPlace(payload.location.place)),
     latitude: payload.location.latitude,
     longitude: payload.location.longitude,
     visibility: "public",

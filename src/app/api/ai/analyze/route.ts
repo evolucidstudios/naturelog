@@ -4,7 +4,7 @@ import OpenAI from "openai";
 import { zodTextFormat } from "openai/helpers/zod";
 import { z } from "zod";
 import { requireOwner } from "@/lib/auth";
-import { normalizeLocationPlace } from "@/lib/nature-utils";
+import { formatLocationLabel, normalizeLocationPlace } from "@/lib/nature-utils";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
 import { isOpenAiConfigured, openAiApiKey } from "@/lib/supabase/env";
 
@@ -59,6 +59,26 @@ export async function POST(request: Request) {
     const bytes = Buffer.from(await image.arrayBuffer());
     const dataUrl = `data:${image.type};base64,${bytes.toString("base64")}`;
     const exif = await exifr.parse(bytes, { gps: true }).catch(() => null);
+    const parsedLatitude =
+      typeof latitude === "string" && latitude.length > 0 ? Number(latitude) : null;
+    const parsedLongitude =
+      typeof longitude === "string" && longitude.length > 0 ? Number(longitude) : null;
+    const resolvedLatitude =
+      typeof parsedLatitude === "number" && Number.isFinite(parsedLatitude)
+        ? parsedLatitude
+        : typeof exif?.latitude === "number"
+          ? exif.latitude
+          : null;
+    const resolvedLongitude =
+      typeof parsedLongitude === "number" && Number.isFinite(parsedLongitude)
+        ? parsedLongitude
+        : typeof exif?.longitude === "number"
+          ? exif.longitude
+          : null;
+    const locationHint =
+      resolvedLatitude !== null && resolvedLongitude !== null
+        ? `Photo coordinates are latitude ${resolvedLatitude}, longitude ${resolvedLongitude}. Use that to choose the nearest real city. For United States locations, format location.place exactly as "City, ST" with the two-letter state code. For other countries, format it exactly as "City, Country". Do not use trails, reserves, lagoons, neighborhoods, or park sub-areas in location.place unless that is also the city name.`
+        : `Format location.place as a clean city-based label. For United States locations, use exactly "City, ST" with the two-letter state code. For other countries, use exactly "City, Country". Do not use trails, reserves, lagoons, neighborhoods, or park sub-areas in location.place unless that is also the city name.`;
 
     const client = new OpenAI({
       apiKey: openAiApiKey,
@@ -73,7 +93,7 @@ export async function POST(request: Request) {
             {
               type: "input_text",
               text:
-                "Analyze this nature photo and return only JSON. Identify the likely subject, write a rich collectible-card description, and generate a strong field card for a long-term nature archive focused on foraging and discovery. Include a simple pronunciation guide for the common name when useful, useful tags, average lifespan when it is reasonably knowable, edible status, a safety-minded edible note, good uses, possible dish or tea ideas when relevant, fun facts, and simple care/location notes when relevant. For location.place, prefer a broad repeatable place name that should stay consistent across many visits, like 'Batiquitos Lagoon' instead of a hyper-specific phrase like 'Batiquitos Lagoon trail near the footbridge'. If this is an animal, bird, fish, or insect, mark edible as not-edible unless you are highly certain the card should be for foraging. Never invent dangerous claims with high confidence. Use empty strings or empty arrays when unsure. JSON keys must be: commonName, pronunciation, scientificName, category, note, tags, lifespan, edible, edibleNote, uses, culinaryIdeas, goodFor, funFacts, care { water, light, season }, location { place, latitude, longitude }, confidence.",
+                `Analyze this nature photo and return only JSON. Identify the likely subject, write a rich collectible-card description, and generate a strong field card for a long-term nature archive focused on foraging and discovery. Include a simple pronunciation guide for the common name when useful, useful tags, average lifespan when it is reasonably knowable, edible status, a safety-minded edible note, good uses, possible dish or tea ideas when relevant, fun facts, and simple care/location notes when relevant. ${locationHint} If this is an animal, bird, fish, or insect, mark edible as not-edible unless you are highly certain the card should be for foraging. Never invent dangerous claims with high confidence. Use empty strings or empty arrays when unsure. JSON keys must be: commonName, pronunciation, scientificName, category, note, tags, lifespan, edible, edibleNote, uses, culinaryIdeas, goodFor, funFacts, care { water, light, season }, location { place, latitude, longitude }, confidence.`,
             },
             {
               type: "input_image",
@@ -100,11 +120,6 @@ export async function POST(request: Request) {
       );
     }
 
-    const parsedLatitude =
-      typeof latitude === "string" && latitude.length > 0 ? Number(latitude) : null;
-    const parsedLongitude =
-      typeof longitude === "string" && longitude.length > 0 ? Number(longitude) : null;
-
     if (typeof parsedLatitude === "number" && typeof parsedLongitude === "number") {
       analysis.location.latitude = parsedLatitude;
       analysis.location.longitude = parsedLongitude;
@@ -113,7 +128,7 @@ export async function POST(request: Request) {
       analysis.location.longitude = exif.longitude;
     }
 
-    analysis.location.place = normalizeLocationPlace(analysis.location.place);
+    analysis.location.place = formatLocationLabel(normalizeLocationPlace(analysis.location.place));
 
     const admin = createSupabaseAdminClient();
     await admin.from("ai_runs").insert({

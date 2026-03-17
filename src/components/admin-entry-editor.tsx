@@ -234,6 +234,7 @@ export function AdminEntryEditor({
   const [message, setMessage] = useState<string | null>(null);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [removedPaths, setRemovedPaths] = useState<string[]>([]);
+  const [tagInput, setTagInput] = useState("");
   const [coverImageKey, setCoverImageKey] = useState<string | null>(
     initialEntry.existingImages[0] ? `existing:${initialEntry.existingImages[0].path}` : null,
   );
@@ -290,6 +291,42 @@ export function AdminEntryEditor({
     setDraft((current) => ({
       ...current,
       ...patch,
+    }));
+  };
+  const addTags = (rawValue: string) => {
+    const nextTags = rawValue
+      .split(/[\n,]+/g)
+      .map((item) => item.trim())
+      .filter(Boolean);
+
+    if (nextTags.length === 0) {
+      return;
+    }
+
+    setDraft((current) => {
+      const existing = new Set(current.tags.map((tag) => normalizeValue(tag)));
+      const merged = [...current.tags];
+
+      for (const tag of nextTags) {
+        const normalizedTag = normalizeValue(tag);
+
+        if (!existing.has(normalizedTag)) {
+          merged.push(tag);
+          existing.add(normalizedTag);
+        }
+      }
+
+      return {
+        ...current,
+        tags: merged,
+      };
+    });
+    setTagInput("");
+  };
+  const removeTag = (tagToRemove: string) => {
+    setDraft((current) => ({
+      ...current,
+      tags: current.tags.filter((tag) => tag !== tagToRemove),
     }));
   };
   const primaryTagHref = draft.tags[0]
@@ -761,13 +798,40 @@ export function AdminEntryEditor({
           <span className="text-xs font-semibold uppercase tracking-[0.18em] text-bark/56">
             Tags
           </span>
-          <textarea
-            value={joinLines(draft.tags)}
-            onChange={(event) => updateDraft({ tags: splitLines(event.target.value) })}
-            rows={6}
-            placeholder="One tag per line"
-            className="mt-2 w-full rounded-[18px] border border-bark/10 bg-paper px-4 py-3 text-base text-bark outline-none"
-          />
+          <div className="mt-2 rounded-[18px] border border-bark/10 bg-paper px-4 py-3">
+            <div className="flex flex-wrap gap-2">
+              {draft.tags.map((tag) => (
+                <button
+                  key={tag}
+                  type="button"
+                  onClick={() => removeTag(tag)}
+                  className="inline-flex items-center gap-2 rounded-full border border-bark/10 bg-sand/30 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-bark"
+                >
+                  <span>{tag}</span>
+                  <span className="text-bark/48">x</span>
+                </button>
+              ))}
+            </div>
+            <input
+              value={tagInput}
+              onChange={(event) => setTagInput(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === ",") {
+                  event.preventDefault();
+                  addTags(tagInput);
+                  return;
+                }
+
+                if (event.key === "Backspace" && !tagInput.trim() && draft.tags.length > 0) {
+                  event.preventDefault();
+                  removeTag(draft.tags[draft.tags.length - 1] ?? "");
+                }
+              }}
+              onBlur={() => addTags(tagInput)}
+              placeholder="Type a tag and press Enter"
+              className="mt-3 w-full bg-transparent text-base text-bark outline-none placeholder:text-bark/42"
+            />
+          </div>
         </label>
         <label className="block">
           <span className="text-xs font-semibold uppercase tracking-[0.18em] text-bark/56">
@@ -838,7 +902,7 @@ export function AdminEntryEditor({
       <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         <label className="block">
           <span className="text-xs font-semibold uppercase tracking-[0.18em] text-bark/56">
-            Location place
+            Location
           </span>
           <input
             value={draft.location.place}
@@ -847,6 +911,7 @@ export function AdminEntryEditor({
                 location: { ...draft.location, place: event.target.value },
               })
             }
+            placeholder="Carlsbad, CA"
             className="mt-2 w-full rounded-[18px] border border-bark/10 bg-paper px-4 py-3 text-base text-bark outline-none"
           />
         </label>

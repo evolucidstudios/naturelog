@@ -20,7 +20,11 @@ export function titleCase(value: string) {
 }
 
 export function normalizeLocationPlace(value: string) {
-  const cleaned = value.trim().replace(/\s+/g, " ");
+  const cleaned = value
+    .trim()
+    .replace(/\s+/g, " ")
+    .replace(/\s*,\s*/g, ", ")
+    .replace(/^,+|,+$/g, "");
 
   if (!cleaned) {
     return "";
@@ -43,7 +47,44 @@ export function normalizeLocationPlace(value: string) {
     .replace(/\b(the)\b\s+/i, "")
     .replace(/\b(trailhead|trail|loop trail|parking lot|overlook|nature preserve|ecological reserve|reserve|preserve)\b$/i, "")
     .replace(/\s+/g, " ")
+    .replace(/\s*,\s*/g, ", ")
+    .replace(/\bcalifornia\b/i, "CA")
+    .replace(/\boregon\b/i, "OR")
+    .replace(/\bwashington\b/i, "WA")
+    .replace(/\bnevada\b/i, "NV")
+    .replace(/\barizona\b/i, "AZ")
+    .replace(/\butah\b/i, "UT")
     .trim();
+}
+
+export function looksLikeUsStateCode(value: string) {
+  return /^[A-Z]{2}$/.test(value.trim());
+}
+
+export function formatLocationLabel(value: string) {
+  const normalized = normalizeLocationPlace(value);
+
+  if (!normalized) {
+    return "";
+  }
+
+  const parts = normalized
+    .split(",")
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+  if (parts.length < 2) {
+    return normalized;
+  }
+
+  const city = parts[0];
+  const region = parts[1];
+
+  if (looksLikeUsStateCode(region.toUpperCase())) {
+    return `${city}, ${region.toUpperCase()}`;
+  }
+
+  return `${city}, ${region}`;
 }
 
 export function getTagCounts(entries: NatureEntry[]) {

@@ -30,14 +30,14 @@ export function AdminLocationBackfillButton() {
               return;
             }
 
-            setMessage(`Standardized ${payload.updated ?? 0} place names.`);
+            setMessage(`Standardized ${payload.updated ?? 0} locations.`);
             router.refresh();
           });
         }}
         className="rounded-full border border-bark/10 bg-paper px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-bark transition-transform duration-200 hover:-translate-y-0.5 disabled:opacity-60"
         disabled={pending}
       >
-        {pending ? "Cleaning places..." : "Backfill places"}
+        {pending ? "Cleaning locations..." : "Backfill locations"}
       </button>
       {message ? (
         <p className="text-xs leading-5 text-bark/64">{message}</p>

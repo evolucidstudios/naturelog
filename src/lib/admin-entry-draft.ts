@@ -1,4 +1,4 @@
-import { normalizeLocationPlace } from "@/lib/nature-utils";
+import { formatLocationLabel, normalizeLocationPlace } from "@/lib/nature-utils";
 
 export type AdminEntryDraft = {
   id?: string;
@@ -94,7 +94,7 @@ export function buildEntryPayloadFromDraft(draft: AdminEntryDraft, imagePaths: s
       season: draft.care.season.trim(),
     },
     location: {
-      place: normalizeLocationPlace(draft.location.place),
+      place: formatLocationLabel(normalizeLocationPlace(draft.location.place)),
       latitude: draft.location.latitude,
       longitude: draft.location.longitude,
     },
