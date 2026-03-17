@@ -70,29 +70,32 @@ export default async function Home() {
     <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(15,163,177,0.22),transparent_24%),radial-gradient(circle_at_top_right,rgba(15,76,129,0.18),transparent_26%),radial-gradient(circle_at_bottom_left,rgba(181,226,250,0.28),transparent_24%),linear-gradient(180deg,#f9f7f3_0%,#e6f7fd_42%,#d9eef9_100%)] px-4 py-5 text-ink sm:px-6 sm:py-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
         <header className="overflow-hidden rounded-[36px] border border-white/70 bg-[linear-gradient(135deg,rgba(249,247,243,0.86),rgba(181,226,250,0.72)_38%,rgba(15,163,177,0.18)_76%,rgba(15,76,129,0.2)_100%)] px-5 py-5 shadow-[0_24px_70px_rgba(31,59,83,0.12)] backdrop-blur sm:px-6">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <Link href="/" className="text-[11px] font-semibold uppercase tracking-[0.34em] text-bark/82">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex min-w-0 items-center gap-2">
+              <Link
+                href="/"
+                className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.28em] text-bark/82 sm:text-[11px] sm:tracking-[0.34em]"
+              >
                 Nature Log
               </Link>
-              <SecretLoginLink className="h-10 w-10" />
+              <SecretLoginLink className="h-9 w-9 sm:h-10 sm:w-10" />
             </div>
-            <div className="flex flex-wrap items-center justify-end gap-3">
+            <div className="flex min-w-0 items-center justify-end gap-2 sm:gap-3">
               {quickStats.map((stat) => (
                 <Link
                   key={stat.label}
                   href={stat.href}
-                  className="inline-flex h-[2.95rem] min-w-[5.9rem] flex-col items-center justify-center rounded-full border border-white/80 bg-[linear-gradient(135deg,rgba(255,255,255,0.82),rgba(181,226,250,0.5))] px-4 text-center shadow-[0_14px_34px_rgba(31,59,83,0.08)] backdrop-blur transition-transform duration-200 hover:-translate-y-1 hover:bg-white"
+                  className="inline-flex h-10 min-w-[4rem] shrink-0 flex-col items-center justify-center rounded-full border border-white/80 bg-[linear-gradient(135deg,rgba(255,255,255,0.82),rgba(181,226,250,0.5))] px-3 text-center shadow-[0_14px_34px_rgba(31,59,83,0.08)] backdrop-blur transition-transform duration-200 hover:-translate-y-1 hover:bg-white sm:h-[2.95rem] sm:min-w-[5.9rem] sm:px-4"
                 >
-                  <p className="text-[10px] uppercase tracking-[0.24em] text-bark/50">
+                  <p className="text-[9px] uppercase tracking-[0.18em] text-bark/50 sm:text-[10px] sm:tracking-[0.24em]">
                     {stat.label === "Cards logged" ? "Cards" : "Tags"}
                   </p>
-                  <p className="mt-0.5 text-base leading-none font-semibold text-bark">{stat.value}</p>
+                  <p className="mt-0.5 text-sm leading-none font-semibold text-bark sm:text-base">{stat.value}</p>
                 </Link>
               ))}
               <Link
                 href="/map"
-                className="inline-flex h-[2.95rem] items-center justify-center rounded-full bg-[linear-gradient(135deg,#0fa3b1,#525174)] px-5 text-xs font-semibold uppercase tracking-[0.18em] text-paper shadow-[0_14px_30px_rgba(15,163,177,0.2)] transition-transform duration-200 hover:-translate-y-0.5"
+                className="inline-flex h-10 shrink-0 items-center justify-center rounded-full bg-[linear-gradient(135deg,#0fa3b1,#525174)] px-4 text-[11px] font-semibold uppercase tracking-[0.14em] text-paper shadow-[0_14px_30px_rgba(15,163,177,0.2)] transition-transform duration-200 hover:-translate-y-0.5 sm:h-[2.95rem] sm:px-5 sm:text-xs sm:tracking-[0.18em]"
               >
                 Explore map
               </Link>
@@ -103,11 +106,10 @@ export default async function Home() {
             <div>
               <p className="text-[11px] uppercase tracking-[0.3em] text-moss/80">Field archive</p>
               <h1 className="mt-4 max-w-3xl text-5xl font-semibold text-bark sm:text-6xl">
-                It is nice to know what a wild thing is called.
+                &quot;It&apos;s nice to know what it&apos;s called...&quot;
               </h1>
               <p className="mt-5 max-w-2xl text-base leading-8 text-ink/74">
-                A name changes the way you see it. The shape stays the same, but suddenly it feels
-                familiar, memorable, and worth keeping.
+                &quot;A name can change the way you see it. Suddenly feels familiar &amp; worth keeping...&quot;
               </p>
             </div>
 

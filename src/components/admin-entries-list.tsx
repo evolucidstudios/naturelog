@@ -43,6 +43,35 @@ export function AdminEntriesList({ entries }: AdminEntriesListProps) {
         </span>
         <button
           type="button"
+          onClick={() =>
+            setSortDirection((current) => (current === "desc" ? "asc" : "desc"))
+          }
+          className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-bark/10 bg-paper text-bark transition-transform duration-200 hover:-translate-y-0.5"
+          aria-label={sortDirection === "desc" ? "Sort descending" : "Sort ascending"}
+          title={sortDirection === "desc" ? "Newest to oldest / Z to A" : "Oldest to newest / A to Z"}
+        >
+          <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            {sortDirection === "desc" ? (
+              <>
+                <path d="M8 5v14" />
+                <path d="m4.5 15.5 3.5 3.5 3.5-3.5" />
+                <path d="M16 7h4" />
+                <path d="M16 12h3" />
+                <path d="M16 17h2" />
+              </>
+            ) : (
+              <>
+                <path d="M8 5v14" />
+                <path d="m4.5 8.5 3.5-3.5 3.5 3.5" />
+                <path d="M16 7h2" />
+                <path d="M16 12h3" />
+                <path d="M16 17h4" />
+              </>
+            )}
+          </svg>
+        </button>
+        <button
+          type="button"
           onClick={() => setSortBy("date")}
           className={`rounded-full px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] transition-transform duration-200 hover:-translate-y-0.5 ${
             sortBy === "date"
@@ -62,15 +91,6 @@ export function AdminEntriesList({ entries }: AdminEntriesListProps) {
           }`}
         >
           Name
-        </button>
-        <button
-          type="button"
-          onClick={() =>
-            setSortDirection((current) => (current === "desc" ? "asc" : "desc"))
-          }
-          className="rounded-full border border-bark/10 bg-paper px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-bark transition-transform duration-200 hover:-translate-y-0.5"
-        >
-          {sortDirection === "desc" ? "Down to up" : "Up to down"}
         </button>
       </div>
 
