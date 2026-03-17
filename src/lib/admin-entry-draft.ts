@@ -1,6 +1,7 @@
 export type AdminEntryDraft = {
   id?: string;
   commonName: string;
+  pronunciation: string;
   scientificName: string;
   category: string;
   note: string;
@@ -40,6 +41,7 @@ function slugify(value: string) {
 export function createEmptyAdminDraft(): AdminEntryDraft {
   return {
     commonName: "",
+    pronunciation: "",
     scientificName: "",
     category: "",
     note: "",
@@ -71,6 +73,7 @@ export function buildEntryPayloadFromDraft(draft: AdminEntryDraft, imagePaths: s
     id: draft.id,
     slug: slugify(draft.commonName),
     commonName: draft.commonName.trim(),
+    pronunciation: draft.pronunciation.trim(),
     scientificName: draft.scientificName.trim(),
     category: draft.category.trim(),
     note: draft.note.trim(),

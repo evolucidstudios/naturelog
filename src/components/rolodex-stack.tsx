@@ -679,7 +679,7 @@ export function RolodexStack({
                     <div className="absolute inset-x-0 bottom-0 h-44 bg-[linear-gradient(180deg,transparent,rgba(0,0,0,0.58))]" />
                     <div className="relative flex min-h-[30rem] flex-col justify-between sm:min-h-[34rem]">
                       <div className="flex items-start justify-between gap-4">
-                        <div className="max-w-[12rem]">
+                        <div className="max-w-[15rem]">
                           <p className="card-title-glow mt-3 text-4xl leading-none font-semibold sm:text-5xl">
                             {entry.commonName}
                           </p>
@@ -837,12 +837,17 @@ export function RolodexStack({
           <p className="text-xs font-bold uppercase tracking-[0.24em] text-moss/70">
             About this find
           </p>
-          <h3 className="mt-2 text-3xl font-semibold text-bark">
-            {activeEntry.commonName}
-          </h3>
-          <p className="mt-1 text-base italic text-ink/50">
-            {activeEntry.scientificName}
-          </p>
+          <div className="mt-2 flex items-start justify-between gap-4">
+            <div>
+              <h3 className="text-3xl font-semibold text-bark">{activeEntry.commonName}</h3>
+              <p className="mt-1 text-base italic text-ink/50">{activeEntry.scientificName}</p>
+            </div>
+            {activeEntry.pronunciation ? (
+              <span className="shrink-0 rounded-full border border-bark/8 bg-paper px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-bark/66">
+                {activeEntry.pronunciation}
+              </span>
+            ) : null}
+          </div>
           <div className="mt-5 rounded-[20px] bg-white/40 p-4 shadow-sm">
             <p className="text-sm leading-7 text-ink/80">
               {activeEntry.note}

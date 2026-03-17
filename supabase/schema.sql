@@ -4,6 +4,7 @@ create table if not exists public.entries (
   id uuid primary key default gen_random_uuid(),
   slug text unique not null,
   common_name text not null,
+  pronunciation text,
   scientific_name text,
   note text not null default '',
   category text,

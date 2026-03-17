@@ -2,6 +2,7 @@ export type NatureEntry = {
   id: string;
   createdAt?: string;
   commonName: string;
+  pronunciation?: string;
   scientificName: string;
   note: string;
   category?: string;

@@ -13,6 +13,7 @@ import {
 
 type AnalyzeResult = {
   commonName: string;
+  pronunciation: string;
   scientificName: string;
   category: string;
   note: string;
@@ -331,6 +332,7 @@ export function AdminEntryEditor({
         setDraft((current) => ({
           ...current,
           commonName: analysis.commonName || current.commonName,
+          pronunciation: analysis.pronunciation || current.pronunciation,
           scientificName: analysis.scientificName || current.scientificName,
           category: analysis.category || current.category,
           note: analysis.note || current.note,
@@ -593,6 +595,17 @@ export function AdminEntryEditor({
           <input
             value={draft.commonName}
             onChange={(event) => updateDraft({ commonName: event.target.value })}
+            className="mt-2 w-full rounded-[18px] border border-bark/10 bg-paper px-4 py-3 text-base text-bark outline-none"
+          />
+        </label>
+        <label className="block">
+          <span className="text-xs font-semibold uppercase tracking-[0.18em] text-bark/56">
+            Pronunciation
+          </span>
+          <input
+            value={draft.pronunciation}
+            onChange={(event) => updateDraft({ pronunciation: event.target.value })}
+            placeholder="Example: AN-uhz HUM-ing-bird"
             className="mt-2 w-full rounded-[18px] border border-bark/10 bg-paper px-4 py-3 text-base text-bark outline-none"
           />
         </label>

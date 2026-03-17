@@ -12,6 +12,7 @@ type EntryRow = {
   id: string;
   slug: string;
   common_name: string;
+  pronunciation: string | null;
   scientific_name: string | null;
   note: string | null;
   category: string | null;
@@ -58,6 +59,7 @@ function rowToNatureEntry(row: EntryRow): NatureEntry {
     id: row.id,
     createdAt: row.created_at,
     commonName: row.common_name,
+    pronunciation: row.pronunciation ?? undefined,
     scientificName: row.scientific_name ?? "",
     note: row.note ?? "",
     category: row.category ?? undefined,
@@ -97,6 +99,7 @@ async function fetchEntries(includePrivate = false) {
         id,
         slug,
         common_name,
+        pronunciation,
         scientific_name,
         note,
         category,
@@ -178,6 +181,7 @@ export async function getAdminEntryDraft(id: string): Promise<AdminEntryDraft | 
     return {
       id: sample.id,
       commonName: sample.commonName,
+      pronunciation: sample.pronunciation ?? "",
       scientificName: sample.scientificName,
       category: sample.category ?? "",
       note: sample.note,
@@ -215,6 +219,7 @@ export async function getAdminEntryDraft(id: string): Promise<AdminEntryDraft | 
         id,
         slug,
         common_name,
+        pronunciation,
         scientific_name,
         note,
         category,
@@ -257,6 +262,7 @@ export async function getAdminEntryDraft(id: string): Promise<AdminEntryDraft | 
   return {
     id: row.id,
     commonName: row.common_name,
+    pronunciation: row.pronunciation ?? "",
     scientificName: row.scientific_name ?? "",
     category: row.category ?? "",
     note: row.note ?? "",
