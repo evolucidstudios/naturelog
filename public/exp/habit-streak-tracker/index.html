@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Habit Streak Tracker</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <main class="page">
+      <section class="hero">
+        <p class="eyebrow">Habit Streak Tracker</p>
+        <h1>Keep the chain alive.</h1>
+        <form id="habitForm" class="habit-form">
+          <input id="habitNameInput" type="text" maxlength="40" placeholder="Add a new habit" required />
+          <button type="submit">Create habit</button>
+        </form>
+      </section>
+      <section id="habitsGrid" class="habits-grid"></section>
+    </main>
+    <script src="./script.js"></script>
+  </body>
+</html>

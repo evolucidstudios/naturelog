@@ -1,0 +1,75 @@
+body {
+  margin: 0;
+  font-family: "Avenir Next", "Segoe UI", sans-serif;
+  color: #173042;
+  background:
+    radial-gradient(circle at top left, rgba(15,163,177,0.22), transparent 24%),
+    radial-gradient(circle at bottom right, rgba(181,226,250,0.26), transparent 24%),
+    linear-gradient(180deg, #f8fcfd 0%, #eef8fb 100%);
+}
+* { box-sizing: border-box; }
+.page { width: min(980px, calc(100% - 1.25rem)); margin: 0 auto; padding: 1rem 0 2rem; }
+.composer {
+  background: rgba(255,255,255,0.88);
+  border-radius: 30px;
+  padding: 1.1rem;
+  box-shadow: 0 18px 42px rgba(23,48,66,0.08);
+}
+.eyebrow { margin: 0; text-transform: uppercase; letter-spacing: 0.22em; font-size: 0.72rem; color: rgba(23,48,66,0.56); }
+h1 { margin: 0.75rem 0 1rem; font-size: clamp(2.2rem, 8vw, 3.8rem); line-height: 0.95; }
+.form-grid { display: grid; gap: 0.8rem; }
+input, textarea, select, button {
+  width: 100%;
+  padding: 0.95rem 1rem;
+  border-radius: 18px;
+  border: 1px solid rgba(23,48,66,0.1);
+  font: inherit;
+}
+button {
+  border: none;
+  cursor: pointer;
+  background: linear-gradient(135deg, #0fa3b1, #9be7ef);
+  color: #062229;
+  font-weight: 800;
+}
+.controls { display: grid; gap: 0.8rem; }
+.checkbox { display: flex; align-items: center; gap: 0.6rem; }
+.checkbox input { width: auto; }
+.board {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+.destination-card {
+  overflow: hidden;
+  border-radius: 28px;
+  background: rgba(255,255,255,0.88);
+  box-shadow: 0 18px 42px rgba(23,48,66,0.08);
+}
+.destination-card img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  display: block;
+}
+.destination-body { padding: 1rem; }
+.badge-row { display: flex; flex-wrap: wrap; gap: 0.55rem; margin-bottom: 0.75rem; }
+.badge {
+  border-radius: 999px;
+  padding: 0.45rem 0.7rem;
+  background: rgba(15,163,177,0.12);
+  color: #0a7d89;
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+.empty-state {
+  background: rgba(255,255,255,0.88);
+  border-radius: 28px;
+  padding: 1.6rem;
+  text-align: center;
+}
+@media (min-width: 760px) {
+  .controls { grid-template-columns: 1fr 1fr; align-items: center; }
+  .board { grid-template-columns: repeat(2, 1fr); }
+}

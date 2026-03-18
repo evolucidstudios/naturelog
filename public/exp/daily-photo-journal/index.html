@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Daily Photo Journal</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <main class="page">
+      <section class="composer">
+        <p class="eyebrow">Daily Photo Journal</p>
+        <h1>Save one moment from today.</h1>
+        <form id="entryForm" class="entry-form">
+          <label class="field">
+            <span>Photo</span>
+            <input id="photoInput" type="file" accept="image/*" required />
+          </label>
+          <label class="field">
+            <span>Caption</span>
+            <textarea id="captionInput" rows="4" maxlength="220" placeholder="What happened today?" required></textarea>
+          </label>
+          <button class="primary-button" type="submit">Save today's note</button>
+        </form>
+      </section>
+
+      <section class="timeline-shell">
+        <div class="timeline-header">
+          <h2>Timeline</h2>
+          <button id="clearAllButton" class="ghost-button" type="button">Clear all</button>
+        </div>
+        <div id="timeline" class="timeline"></div>
+      </section>
+    </main>
+    <script src="./script.js"></script>
+  </body>
+</html>

@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Would You Rather?</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <main class="page">
+      <section class="card">
+        <p class="eyebrow">Would You Rather?</p>
+        <p class="progress" id="progressLabel">0 answered</p>
+        <h1 id="questionPrompt">Ready for the first ridiculous choice?</h1>
+        <div class="option-grid">
+          <button id="optionAButton" class="option-button" type="button"></button>
+          <button id="optionBButton" class="option-button" type="button"></button>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Add your own</h2>
+        <form id="customQuestionForm" class="stack">
+          <input id="optionAInput" type="text" placeholder="Option A" required />
+          <input id="optionBInput" type="text" placeholder="Option B" required />
+          <button type="submit">Save question</button>
+        </form>
+      </section>
+    </main>
+    <script src="./script.js"></script>
+  </body>
+</html>

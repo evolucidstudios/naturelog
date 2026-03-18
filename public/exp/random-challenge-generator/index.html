@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Random Challenge Generator</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <main class="page">
+      <section class="hero">
+        <p class="eyebrow">Random Challenge Generator</p>
+        <h1>Need something to do?</h1>
+        <div class="toolbar">
+          <select id="categorySelect"></select>
+          <button id="generateButton" type="button">Generate challenge</button>
+          <button id="favoriteButton" class="ghost" type="button">Favorite this</button>
+        </div>
+      </section>
+
+      <section class="result-card">
+        <p class="result-category" id="resultCategory">Pick a category and generate one.</p>
+        <h2 id="resultTitle">Ready when you are.</h2>
+      </section>
+
+      <section class="split-grid">
+        <div class="panel">
+          <h3>Add your own</h3>
+          <form id="customForm" class="stack">
+            <input id="customText" type="text" maxlength="160" placeholder="Add a custom challenge" required />
+            <select id="customCategory"></select>
+            <button type="submit">Save challenge</button>
+          </form>
+        </div>
+        <div class="panel">
+          <h3>Favorites</h3>
+          <div id="favoritesList" class="list"></div>
+        </div>
+      </section>
+    </main>
+    <script src="./script.js"></script>
+  </body>
+</html>

@@ -1,0 +1,88 @@
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  font-family: "Avenir Next", "Segoe UI", sans-serif;
+  color: #1a1030;
+  background:
+    radial-gradient(circle at top left, rgba(255, 79, 163, 0.28), transparent 24%),
+    radial-gradient(circle at top right, rgba(53, 208, 221, 0.26), transparent 24%),
+    linear-gradient(180deg, #fff8fc 0%, #fffefb 100%);
+}
+* { box-sizing: border-box; }
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  backdrop-filter: blur(18px);
+  background: rgba(255,255,255,0.76);
+}
+.brand, nav a {
+  color: inherit;
+  text-decoration: none;
+  font-weight: 800;
+}
+nav { display: flex; gap: 1rem; flex-wrap: wrap; justify-content: end; }
+main { width: min(1080px, calc(100% - 1.5rem)); margin: 0 auto; padding: 1rem 0 3rem; }
+.hero, .section {
+  border-radius: 34px;
+  background: rgba(255,255,255,0.82);
+  box-shadow: 0 20px 50px rgba(26,16,48,0.08);
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+}
+.hero {
+  display: grid;
+  gap: 1rem;
+}
+.eyebrow { margin: 0; text-transform: uppercase; letter-spacing: 0.24em; font-size: 0.72rem; color: rgba(26,16,48,0.56); }
+h1 { margin: 0.75rem 0; font-size: clamp(2.5rem, 10vw, 5.3rem); line-height: 0.92; }
+.hero-copy, .about-copy { line-height: 1.8; font-size: 1rem; }
+.cta, .product-card, dialog button {
+  border: none;
+  font: inherit;
+}
+.cta, dialog button {
+  padding: 1rem 1.1rem;
+  border-radius: 20px;
+  background: linear-gradient(135deg, #ff4fa3, #35d0dd);
+  color: white;
+  font-weight: 800;
+  cursor: pointer;
+}
+.hero-can {
+  min-height: 280px;
+  border-radius: 30px;
+  display: grid;
+  place-items: center;
+  font-size: 5rem;
+  font-weight: 900;
+  color: white;
+  background: linear-gradient(160deg, #ff4fa3, #7b5cff 45%, #35d0dd);
+}
+.section-heading { margin-bottom: 1rem; }
+.product-grid, .review-grid {
+  display: grid;
+  gap: 1rem;
+}
+.product-card, blockquote {
+  margin: 0;
+  padding: 1rem;
+  border-radius: 24px;
+  background: rgba(26,16,48,0.05);
+}
+dialog {
+  border: none;
+  border-radius: 26px;
+  padding: 1.25rem;
+  width: min(420px, calc(100% - 2rem));
+}
+dialog::backdrop { background: rgba(26,16,48,0.4); }
+@media (min-width: 780px) {
+  .hero { grid-template-columns: 1.15fr 0.85fr; align-items: center; }
+  .product-grid, .review-grid { grid-template-columns: repeat(3, 1fr); }
+}

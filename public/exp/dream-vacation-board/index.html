@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dream Vacation Board</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <main class="page">
+      <section class="composer">
+        <p class="eyebrow">Dream Vacation Board</p>
+        <h1>Save the places you want next.</h1>
+        <form id="destinationForm" class="form-grid">
+          <input id="destinationName" type="text" placeholder="Destination" required />
+          <input id="destinationImage" type="file" accept="image/*" required />
+          <textarea id="destinationNotes" rows="4" placeholder="Notes"></textarea>
+          <div class="controls">
+            <label>Rating
+              <select id="destinationRating">
+                <option value="5">5</option>
+                <option value="4">4</option>
+                <option value="3">3</option>
+                <option value="2">2</option>
+                <option value="1">1</option>
+              </select>
+            </label>
+            <label class="checkbox">
+              <input id="destinationWanted" type="checkbox" />
+              Most wanted
+            </label>
+          </div>
+          <button type="submit">Save destination</button>
+        </form>
+      </section>
+
+      <section id="board" class="board"></section>
+    </main>
+    <script src="./script.js"></script>
+  </body>
+</html>

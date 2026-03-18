@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Random Meal Picker</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="hero-card">
+        <p class="eyebrow">Random Meal Picker</p>
+        <h1>Stop deciding what to eat.</h1>
+        <p class="subcopy">Pick a vibe, hit the button, and let the meal choose itself.</p>
+      </section>
+
+      <section class="filters-card">
+        <div class="filter-heading">
+          <h2>Filters</h2>
+          <button id="clearFiltersButton" class="ghost-button" type="button">Clear</button>
+        </div>
+        <div class="filter-grid" id="filterGrid"></div>
+      </section>
+
+      <section class="action-card">
+        <button id="pickMealButton" class="big-button" type="button">Pick My Meal</button>
+        <button id="pickAgainButton" class="secondary-button" type="button">Pick Again</button>
+      </section>
+
+      <section class="result-card" id="resultCard">
+        <p class="result-state">Pick a meal to get started.</p>
+      </section>
+    </main>
+
+    <script src="./script.js"></script>
+  </body>
+</html>
